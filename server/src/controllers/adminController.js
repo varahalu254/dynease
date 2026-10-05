@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Restaurant = require('../models/Restaurant');
+const Order = require('../models/Order');
 const whatsapp = require('../utils/whatsapp');
 
 exports.createRestaurant = async (req, res, next) => {
@@ -127,5 +128,40 @@ exports.sendCustomMessage = async (req, res, next) => {
   } catch (error) {
     console.error('Custom message error:', error.message);
     res.status(500).json({ success: false, message: 'Failed to send message: ' + error.message });
+  }
+};
+
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().populate('restaurantId', 'name');
+    res.status(200).json({ success: true, data: { users } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getAnalytics = async (req, res, next) => {
+  try {
+    const totalRestaurants = await Restaurant.countDocuments();
+    const activeRestaurants = await Restaurant.countDocuments({ isActive: true });
+    const totalUsers = await User.countDocuments();
+    
+    // Calculate total revenue and total orders
+    const orders = await Order.find({ paymentStatus: 'PAID' });
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    const totalOrders = await Order.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalRestaurants,
+        activeRestaurants,
+        totalUsers,
+        totalRevenue,
+        totalOrders
+      }
+    });
+  } catch (error) {
+    next(error);
   }
 };

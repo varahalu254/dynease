@@ -18,4 +18,7 @@ router.post('/requests/:id/reject', adminController.rejectRequest);
 
 router.post('/whatsapp/send', adminController.sendCustomMessage);
 
+router.get('/users', adminController.getAllUsers);
+router.get('/analytics', adminController.getAnalytics);
+
 module.exports = router;

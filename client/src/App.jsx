@@ -11,6 +11,10 @@ import AdsManagement from './pages/admin/Adsmanagement';
 import RestaurantsManagement from './pages/admin/RestaurentsManagement';
 import RequestsManagement from './pages/admin/RequestsManagement';
 import CustomMessage from './pages/admin/CustomMessage';
+import UsersManagement from './pages/admin/UsersManagement';
+import Analytics from './pages/admin/Analytics';
+import Settings from './pages/admin/Settings';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import RestaurantLayout from './pages/restaurant/Layout';
 import MenuManagement from './pages/restaurant/MenuManagement';
 import About from './pages/About';
@@ -52,18 +56,24 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<AdminLayout />}>
-            <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Admin Dashboard</div>} />
+            <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<RestaurantsManagement />} />
             <Route path="requests" element={<RequestsManagement />} />
             <Route path="ads" element={<AdsManagement />} />
             <Route path="messages" element={<CustomMessage />} />
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Admin Dashboard</div>} />
+            <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<RestaurantsManagement />} />
             <Route path="requests" element={<RequestsManagement />} />
             <Route path="ads" element={<AdsManagement />} />
             <Route path="messages" element={<CustomMessage />} />
+            <Route path="users" element={<UsersManagement />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<div className="min-h-screen flex items-center justify-center font-bold text-gray-400">404 Admin Page Not Found</div>} />
         </Routes>
@@ -97,11 +107,14 @@ function App() {
         
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Admin Dashboard</div>} />
+          <Route index element={<AdminDashboard />} />
           <Route path="restaurants" element={<RestaurantsManagement />} />
           <Route path="requests" element={<RequestsManagement />} />
           <Route path="ads" element={<AdsManagement />} />
           <Route path="messages" element={<CustomMessage />} />
+          <Route path="users" element={<UsersManagement />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

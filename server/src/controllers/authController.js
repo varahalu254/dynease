@@ -4,11 +4,7 @@ const { createSendToken } = require('../utils/jwt');
 
 exports.registerRestaurantOwner = async (req, res, next) => {
   try {
-    const { name, ownerName, email, phone, password, confirmPassword } = req.body;
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ success: false, message: 'Passwords do not match' });
-    }
+    const { name, ownerName, email, phone } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -16,11 +12,14 @@ exports.registerRestaurantOwner = async (req, res, next) => {
         return res.status(409).json({ success: false, message: 'Email already exists' });
     }
 
+    // Generate a temporary password since they don't set it during registration
+    const tempPassword = 'Welcome' + Math.floor(1000 + Math.random() * 9000) + '!';
+
     // Create User
     const newUser = await User.create({
       name: ownerName,
       email,
-      password,
+      password: tempPassword,
       phone,
       role: 'RESTAURANT_OWNER'
     });

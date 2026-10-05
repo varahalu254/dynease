@@ -7,9 +7,7 @@ export default function RegisterRestaurant() {
     name: '',
     ownerName: '',
     email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
+    phone: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,11 +16,6 @@ export default function RegisterRestaurant() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
 
     setLoading(true);
     try {
@@ -119,21 +112,7 @@ export default function RegisterRestaurant() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <div className="mt-1">
-                  <input name="password" type="password" required value={formData.password} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-                <div className="mt-1">
-                  <input name="confirmPassword" type="password" required value={formData.confirmPassword} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
-                </div>
-              </div>
-            </div>
 
             <div>
               <button type="submit" disabled={loading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50">

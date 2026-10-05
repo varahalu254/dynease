@@ -11,6 +11,9 @@ const publicRoutes = require('./routes/publicRoutes');
 
 const app = express();
 
+// Trust reverse proxy for rate limiter (Hostinger uses Nginx/LiteSpeed)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 const allowedOrigins = ['http://localhost:5173', 'http://admin.localhost:5173', 'https://dynease.in'];

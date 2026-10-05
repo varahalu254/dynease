@@ -45,6 +45,17 @@ app.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'API is running smoothly.' });
 });
 
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Serve React App for any unknown non-api routes
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);

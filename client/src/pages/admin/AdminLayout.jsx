@@ -19,7 +19,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-orange-500">Dinease Admin</h2>
+          <h2 className="text-2xl font-bold text-orange-500">Dynease Admin</h2>
         </div>
         
         <nav className="flex-1 px-4 space-y-2 mt-4">

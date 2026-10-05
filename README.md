@@ -1,1 +1,1 @@
-# dinease
+# dynease

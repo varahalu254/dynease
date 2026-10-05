@@ -7,8 +7,8 @@ export default function Navbar({ minimal = false }) {
   return (
     <nav className={`flex justify-between items-center px-8 py-6 max-w-7xl mx-auto ${minimal ? 'border-b border-gray-100' : ''}`}>
       <Link to="/" className="text-2xl font-bold text-orange-600 tracking-tight flex items-center gap-2">
-        <img src={iconImage} alt="Dinease Logo" className="w-8 h-8" />
-        Dinease
+        <img src={iconImage} alt="Dynease Logo" className="w-8 h-8" />
+        Dynease
       </Link>
       
       {minimal ? (

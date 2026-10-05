@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const http = require('http');
 const app = require('./src/app');
 const mongoose = require('mongoose');
@@ -19,7 +19,7 @@ const io = new Server(server, {
 require('./src/sockets')(io);
 
 // Database connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/dinease')
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/dynease')
   .then(() => {
     console.log('Connected to MongoDB');
     server.listen(PORT, () => {

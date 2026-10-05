@@ -9,7 +9,7 @@ exports.createMenuItem = async (req, res) => {
     let image = null;
     if (req.file) {
       try {
-        const uploadResult = await uploadToCloudinary(req.file.buffer, `dinease/menu/${restaurantId}`);
+        const uploadResult = await uploadToCloudinary(req.file.buffer, `dynease/menu/${restaurantId}`);
         image = {
           public_id: uploadResult.public_id,
           secure_url: uploadResult.secure_url

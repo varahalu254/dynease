@@ -3,9 +3,9 @@ import { QrCode, Plus, Download, Printer, Trash2 } from 'lucide-react';
 
 export default function TablesManagement() {
   const [tables, setTables] = useState([
-    { id: 1, number: '1', name: 'Window 1', capacity: 4, status: 'AVAILABLE', qr: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=dinease.com/r/paradise/t/1' },
-    { id: 2, number: '2', name: 'Window 2', capacity: 2, status: 'OCCUPIED', qr: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=dinease.com/r/paradise/t/2' },
-    { id: 3, number: '12', name: 'Family Area', capacity: 8, status: 'AVAILABLE', qr: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=dinease.com/r/paradise/t/12' },
+    { id: 1, number: '1', name: 'Window 1', capacity: 4, status: 'AVAILABLE', qr: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=paradise.dynease.in/t/1' },
+    { id: 2, number: '2', name: 'Window 2', capacity: 2, status: 'OCCUPIED', qr: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=paradise.dynease.in/t/2' },
+    { id: 3, number: '12', name: 'Family Area', capacity: 8, status: 'AVAILABLE', qr: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=paradise.dynease.in/t/12' },
   ]);
 
   return (

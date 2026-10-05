@@ -15,7 +15,7 @@ export default function About() {
             Transforming the dining experience, <br/> <span className="text-orange-600">one table at a time.</span>
           </h1>
           <p className="text-lg text-gray-600 leading-relaxed">
-            Dinease was born out of a simple idea: that ordering food at a restaurant should be as delightful as eating it. We're bridging the gap between exceptional culinary craft and modern digital convenience.
+            Dynease was born out of a simple idea: that ordering food at a restaurant should be as delightful as eating it. We're bridging the gap between exceptional culinary craft and modern digital convenience.
           </p>
         </div>
       </section>

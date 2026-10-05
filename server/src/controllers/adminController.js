@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Restaurant = require('../models/Restaurant');
+const whatsapp = require('../utils/whatsapp');
 
 exports.createRestaurant = async (req, res, next) => {
   try {
@@ -82,10 +83,20 @@ exports.getPendingRequests = async (req, res, next) => {
 exports.approveRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const restaurant = await Restaurant.findByIdAndUpdate(id, { status: 'APPROVED', isActive: true }, { new: true });
+    const restaurant = await Restaurant.findByIdAndUpdate(id, { status: 'APPROVED', isActive: true }, { new: true }).populate('ownerId');
     if (!restaurant) {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
+
+    if (restaurant.ownerId && restaurant.ownerId.phone) {
+      try {
+        const message = `🎉 Congratulations! Your restaurant "${restaurant.name}" has been approved on Dynease.\n\nYou can now log in to your dashboard to manage your menu and orders:\n${process.env.CLIENT_URL}`;
+        await whatsapp.sendTextMessage(restaurant.ownerId.phone, message);
+      } catch (waError) {
+        console.error('Failed to send WhatsApp approval notification:', waError.message);
+      }
+    }
+
     res.status(200).json({ success: true, message: 'Restaurant approved successfully', data: { restaurant } });
   } catch (error) {
     next(error);

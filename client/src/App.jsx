@@ -1,9 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
 import HomePage from './pages/customer/HomePage';
 import ItemDescription from './pages/customer/ItemDescription';
 import Cart from './pages/customer/Cart';
 import FeedbackForm from './pages/customer/FeedbackForm';
+import QRMenuLoader from './pages/customer/QRMenuLoader';
+import Login from './pages/Login';
 import KitchenOrders from './pages/kitchen/Orders';
 import TablesManagement from './pages/restaurant/TablesManagement';
 import AdminLayout from './pages/admin/AdminLayout';
@@ -18,7 +20,10 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import RestaurantLayout from './pages/restaurant/Layout';
 import MenuManagement from './pages/restaurant/MenuManagement';
 import About from './pages/About';
+import Pricing from './pages/Pricing';
 import RegisterRestaurant from './pages/RegisterRestaurant';
+import HowItWorks from './pages/HowItWorks';
+import Features from './pages/Features';
 
 function App() {
   const hostname = window.location.hostname;
@@ -41,9 +46,17 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage forcedSlug={subdomain} />} />
           <Route path="/t/:tableId" element={<HomePage forcedSlug={subdomain} />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegisterRestaurant />} />
           <Route path="/item/:id" element={<ItemDescription />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/feedback" element={<FeedbackForm />} />
+          <Route path="/admin" element={<Navigate to="/restaurant" replace />} />
+          <Route path="/restaurant" element={<RestaurantLayout />}>
+            <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Restaurant Dashboard</div>} />
+            <Route path="menu" element={<MenuManagement />} />
+            <Route path="tables" element={<TablesManagement />} />
+          </Route>
           <Route path="*" element={<div className="min-h-screen flex flex-col items-center justify-center p-10 text-center font-bold text-gray-400"><h1 className="text-4xl text-gray-800 mb-2">404</h1>Page not found on this restaurant</div>} />
         </Routes>
       </BrowserRouter>
@@ -55,6 +68,7 @@ function App() {
     return (
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route path="/" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="restaurants" element={<RestaurantsManagement />} />
@@ -87,6 +101,10 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
         <Route path="/about" element={<About />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterRestaurant />} />
         
         {/* Customer Routes (Fallback for local dev like /r/test) */}
@@ -94,6 +112,7 @@ function App() {
         <Route path="/item/:id" element={<ItemDescription />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/feedback" element={<FeedbackForm />} />
+        <Route path="/menu/:qrToken" element={<QRMenuLoader />} />
         
         {/* Kitchen Routes */}
         <Route path="/kitchen/orders" element={<KitchenOrders />} />

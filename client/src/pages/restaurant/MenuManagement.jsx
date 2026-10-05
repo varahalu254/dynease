@@ -22,7 +22,10 @@ export default function MenuManagement() {
 
   const fetchMenu = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/menu`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/menu`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await res.json();
       if (data.success) {
         setItems(data.data.menuItems);
@@ -59,8 +62,10 @@ export default function MenuManagement() {
     }
 
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/menu`, {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
         body: data // Do NOT set Content-Type header when using FormData, browser does it automatically with boundary
       });
       const json = await res.json();

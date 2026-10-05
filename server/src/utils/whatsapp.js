@@ -12,7 +12,11 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
  * @returns {string}
  */
 const sanitizePhone = (phone) => {
-  return phone.replace(/[\s+\-()]/g, '');
+  let clean = phone.replace(/[\s+\-()]/g, '');
+  if (clean.length === 10) {
+    clean = '91' + clean;
+  }
+  return clean;
 };
 
 /**

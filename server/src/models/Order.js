@@ -33,6 +33,9 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Table'
   },
+  tableNumber: {
+    type: String
+  },
   customerSessionId: {
     type: String, // To track a guest user via local storage
   },

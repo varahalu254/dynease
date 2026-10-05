@@ -10,7 +10,7 @@ export default function LandingPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-20 pb-32 px-8">
+      <section className="pt-20 pb-4 md:pb-12 px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
             Dine Smarter. <span className="text-orange-600">Order Faster.</span>
@@ -22,15 +22,15 @@ export default function LandingPage() {
             <Link to="/register" className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-2 transition-all">
               Get Started <ArrowRight size={20} />
             </Link>
-            <a href="#demo" className="bg-orange-50 hover:bg-orange-100 text-orange-600 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center transition-all">
+            <Link to="/how-it-works" className="bg-orange-50 hover:bg-orange-100 text-orange-600 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center transition-all">
               See How It Works
-            </a>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section id="features" className="bg-gray-50 py-24 px-8">
+      <section id="features" className="bg-gray-50 pt-8 md:pt-12 pb-24 px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything you need to run a modern restaurant</h2>

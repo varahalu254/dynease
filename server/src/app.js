@@ -6,19 +6,21 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const restaurantRoutes = require('./routes/restaurantRoutes');
+const tableRoutes = require('./routes/tableRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 
 const app = express();
 
 // Middleware
 app.use(helmet());
-const allowedOrigins = ['http://localhost:5173', 'https://dynease.in'];
+const allowedOrigins = ['http://localhost:5173', 'http://admin.localhost:5173', 'https://dynease.in'];
 app.use(cors({
   origin: function (origin, callback) {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     // Allow localhost, main domain, and any subdomain
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.dynease.in')) {
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('.dynease.in') || origin.includes('localhost')) {
       return callback(null, true);
     }
     
@@ -38,7 +40,9 @@ app.use('/api', limiter);
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/restaurant/tables', tableRoutes);
 app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/public', publicRoutes);
 
 // Routes
 app.get('/health', (req, res) => {

@@ -17,6 +17,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.52.0",
     "postcss": "^8.5.29",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.89.0",

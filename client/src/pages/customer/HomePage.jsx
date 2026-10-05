@@ -1,17 +1,50 @@
-import React from 'react';
-import { Search, ShoppingBag, Star, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, ShoppingBag, Star, Clock, Loader2 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 
 export default function HomePage({ forcedSlug }) {
   const { slug: paramSlug } = useParams();
   const activeSlug = forcedSlug || paramSlug;
-  // We can now use activeSlug to fetch specific restaurant data!
+  
+  const [restaurant, setRestaurant] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const categories = ['Starters', 'Main Course', 'Biryani', 'Desserts', 'Beverages'];
-  const menuItems = [
-    { id: 1, name: 'Chicken Dum Biryani', price: 299, type: 'non-veg', img: 'https://placehold.co/200x200/orange/white?text=Biryani', desc: 'Aromatic basmati rice layered with marinated chicken, cooked to perfection.' },
-    { id: 2, name: 'Paneer Tikka', price: 249, type: 'veg', img: 'https://placehold.co/200x200/green/white?text=Paneer', desc: 'Cottage cheese cubes marinated in spices and grilled in a tandoor.' },
-  ];
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        if (!activeSlug) return;
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/public/restaurant/${activeSlug}/menu`);
+        const json = await res.json();
+        
+        if (json.success) {
+          setRestaurant(json.data.restaurant);
+          setMenuItems(json.data.menuItems);
+          setCategories(json.data.categories);
+        } else {
+          setError(json.message);
+        }
+      } catch (err) {
+        setError('Network error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, [activeSlug]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><Loader2 className="animate-spin text-orange-500 w-8 h-8" /></div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 text-center">
+      <h2 className="text-xl font-bold text-gray-900 mb-2">Oops!</h2>
+      <p className="text-gray-600">{error}</p>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 max-w-md mx-auto relative pb-24 shadow-2xl">
@@ -19,7 +52,7 @@ export default function HomePage({ forcedSlug }) {
       <header className="bg-white p-4 shadow-sm relative z-10">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Paradise Biryani</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{restaurant?.name || 'Restaurant'}</h1>
             <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
               <span className="flex items-center gap-1 text-yellow-500 font-medium"><Star size={16} className="fill-current" /> 4.8</span>
               <span className="flex items-center gap-1"><Clock size={16} /> 20-30 min</span>
@@ -57,17 +90,21 @@ export default function HomePage({ forcedSlug }) {
         <h2 className="text-lg font-bold text-gray-800 mb-4">Recommended</h2>
         <div className="space-y-4">
           {menuItems.map(item => (
-            <Link to={`/item/${item.id}`} key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 block hover:shadow-md transition-shadow">
+            <Link to={`/item/${item._id}`} key={item._id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4 block hover:shadow-md transition-shadow">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className={`w-3 h-3 rounded-full ${item.type === 'veg' ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <div className={`w-3 h-3 rounded-full ${item.dietaryPreference === 'VEG' ? 'bg-green-500' : item.dietaryPreference === 'NON_VEG' ? 'bg-red-500' : 'bg-gray-400'}`} />
                   <h3 className="font-bold text-gray-900 text-lg">{item.name}</h3>
                 </div>
                 <p className="text-orange-600 font-bold mb-2">₹{item.price}</p>
-                <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{item.desc}</p>
+                <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{item.description}</p>
               </div>
               <div className="relative shrink-0">
-                <img src={item.img} alt={item.name} className="w-28 h-28 object-cover rounded-xl shadow-sm" />
+                <img 
+                  src={item.image?.secure_url || `https://placehold.co/200x200/orange/white?text=${item.name.charAt(0)}`} 
+                  alt={item.name} 
+                  className="w-28 h-28 object-cover rounded-xl shadow-sm" 
+                />
                 <button 
                   onClick={(e) => { e.preventDefault(); /* Add to cart logic */ }}
                   className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-orange-600 border border-orange-200 font-bold px-5 py-1.5 rounded-lg shadow-sm hover:bg-orange-50 transition-colors uppercase text-sm"

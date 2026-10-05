@@ -32,7 +32,14 @@ const userSchema = new mongoose.Schema({
   restaurantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Restaurant',
-    // Required for restaurant staff, owner, kitchen staff. Null for super admin or generic customer.
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  emailVerified: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

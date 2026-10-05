@@ -10,18 +10,26 @@ const tableSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  tableName: {
+    type: String
+  },
   capacity: {
     type: Number,
     required: true,
     default: 4
+  },
+  qrToken: {
+    type: String,
+    unique: true,
+    sparse: true
   },
   qrCodeUrl: {
     type: String, 
   },
   status: {
     type: String,
-    enum: ['AVAILABLE', 'OCCUPIED', 'RESERVED'],
-    default: 'AVAILABLE'
+    enum: ['ACTIVE', 'INACTIVE'],
+    default: 'ACTIVE'
   }
 }, { timestamps: true });
 

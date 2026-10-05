@@ -4,34 +4,60 @@ const { createSendToken } = require('../utils/jwt');
 
 exports.registerRestaurantOwner = async (req, res, next) => {
   try {
-    const { name, ownerName, email, phone } = req.body;
+    const { name, type, ownerName, email, ownerPhone, phone, selectedPlan, subdomain } = req.body;
+    
+    const userEmail = email || `${ownerPhone}@dynease.in`;
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ $or: [{ email: userEmail }, { phone: ownerPhone }] });
     if (existingUser) {
-        return res.status(409).json({ success: false, message: 'Email already exists' });
+        return res.status(409).json({ success: false, message: 'User with this phone/email already exists' });
     }
 
     // Generate a temporary password since they don't set it during registration
     const tempPassword = 'Welcome' + Math.floor(1000 + Math.random() * 9000) + '!';
 
-    // Create User
+    // Create User (inactive by default)
     const newUser = await User.create({
       name: ownerName,
-      email,
+      email: userEmail,
       password: tempPassword,
-      phone,
-      role: 'RESTAURANT_OWNER'
+      phone: ownerPhone,
+      role: 'RESTAURANT_OWNER',
+      isActive: false
     });
 
-    // Create Restaurant Shell
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    // Handle Slug/Subdomain
+    let finalSlug;
+    if (subdomain) {
+      finalSlug = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const slugExists = await Restaurant.findOne({ slug: finalSlug });
+      if (slugExists) {
+        // We must remove the created user if registration fails here to prevent orphaned accounts
+        await User.findByIdAndDelete(newUser._id);
+        return res.status(409).json({ success: false, message: 'This domain is already taken. Please choose another.' });
+      }
+    } else {
+      let baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      finalSlug = baseSlug;
+      let slugExists = await Restaurant.findOne({ slug: finalSlug });
+      let counter = 1;
+      while (slugExists) {
+        finalSlug = `${baseSlug}-${counter}`;
+        slugExists = await Restaurant.findOne({ slug: finalSlug });
+        counter++;
+      }
+    }
     
     const restaurant = await Restaurant.create({
       name,
-      slug: slug + '-' + Math.floor(Math.random() * 1000), // Ensure uniqueness
+      type: type || 'Restaurant',
+      slug: finalSlug,
       ownerId: newUser._id,
-      status: 'PENDING',
+      phone,
+      email: userEmail,
+      selectedPlan: selectedPlan || 'FREE',
+      status: 'PENDING_APPROVAL',
       isActive: false
     });
 
@@ -53,13 +79,32 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide email and password' });
+      return res.status(400).json({ success: false, message: 'Please provide email/phone and password' });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ 
+      $or: [{ email: email }, { phone: email }] 
+    }).select('+password').populate('restaurantId');
 
     if (!user || !(await user.comparePassword(password, user.password))) {
       return res.status(401).json({ success: false, message: 'Incorrect email or password' });
+    }
+
+    if (user.role === 'RESTAURANT_OWNER') {
+      if (!user.isActive) {
+        if (user.restaurantId) {
+          if (user.restaurantId.status === 'PENDING_APPROVAL') {
+            return res.status(403).json({ success: false, message: 'Your restaurant registration is still under review.' });
+          }
+          if (user.restaurantId.status === 'REJECTED') {
+            return res.status(403).json({ success: false, message: `Your registration was not approved. Reason: ${user.restaurantId.rejectionReason || 'Unknown'}. Please contact support.` });
+          }
+          if (user.restaurantId.status === 'SUSPENDED') {
+            return res.status(403).json({ success: false, message: 'Your restaurant account has been suspended. Please contact support.' });
+          }
+        }
+        return res.status(403).json({ success: false, message: 'Your account is not active. Please contact support.' });
+      }
     }
 
     createSendToken(user, 200, res);

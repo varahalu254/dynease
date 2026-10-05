@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Restaurant = require('../models/Restaurant');
 const Order = require('../models/Order');
+const SubscriptionPlan = require('../models/SubscriptionPlan');
 const whatsapp = require('../utils/whatsapp');
 
 exports.createRestaurant = async (req, res, next) => {
@@ -216,6 +217,82 @@ exports.getAnalytics = async (req, res, next) => {
         totalOrders
       }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateRestaurant = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, subscriptionPlan, isActive } = req.body;
+    const restaurant = await Restaurant.findByIdAndUpdate(
+      id,
+      { name, selectedPlan: subscriptionPlan, isActive },
+      { new: true, runValidators: true }
+    );
+    if (!restaurant) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+    res.status(200).json({ success: true, message: 'Restaurant updated successfully', data: { restaurant } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteRestaurant = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const restaurant = await Restaurant.findByIdAndDelete(id);
+    if (!restaurant) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+    await User.deleteMany({ restaurantId: id }); // Delete associated users
+    res.status(200).json({ success: true, message: 'Restaurant and associated users deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.sendCredentials = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const restaurant = await Restaurant.findById(id).populate('ownerId');
+    if (!restaurant || !restaurant.ownerId) {
+      return res.status(404).json({ success: false, message: 'Restaurant or owner not found' });
+    }
+
+    const user = restaurant.ownerId;
+    const tempPassword = 'Welcome' + Math.floor(1000 + Math.random() * 9000) + '!';
+    user.password = tempPassword;
+    await user.save();
+
+    if (user.phone) {
+      const loginUrl = `http://${restaurant.slug}.dynease.in/login`;
+      const message = `🎉 Your login credentials have been reset!\n\nYou can login at: ${loginUrl}\n\nYour login credentials:\nMobile Number: ${user.phone}\nPassword: ${tempPassword}`;
+      await whatsapp.sendTextMessage(user.phone, message);
+    }
+
+    res.status(200).json({ success: true, message: 'Credentials sent to owner successfully via WhatsApp.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPlans = async (req, res, next) => {
+  try {
+    const plans = await SubscriptionPlan.find({ isActive: true });
+    res.status(200).json({ success: true, data: { plans } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createPlan = async (req, res, next) => {
+  try {
+    const { name, price, description, features } = req.body;
+    const plan = await SubscriptionPlan.create({ name, price, description, features });
+    res.status(201).json({ success: true, message: 'Plan created successfully', data: { plan } });
   } catch (error) {
     next(error);
   }

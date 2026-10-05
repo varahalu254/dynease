@@ -11,6 +11,8 @@ const router = express.Router();
 
 router.post('/restaurants', adminController.createRestaurant);
 router.get('/restaurants', adminController.getAllRestaurants);
+router.put('/restaurants/:id', adminController.updateRestaurant);
+router.delete('/restaurants/:id', adminController.deleteRestaurant);
 
 router.get('/requests', adminController.getPendingRequests);
 router.post('/requests/:id/approve', adminController.approveRequest);
@@ -21,5 +23,12 @@ router.post('/whatsapp/send', adminController.sendCustomMessage);
 
 router.get('/users', adminController.getAllUsers);
 router.get('/analytics', adminController.getAnalytics);
+
+// Subscription Plans
+router.get('/plans', adminController.getPlans);
+router.post('/plans', adminController.createPlan);
+
+// Send login credentials to restaurant owner via WhatsApp
+router.post('/restaurants/:id/send-credentials', adminController.sendCredentials);
 
 module.exports = router;

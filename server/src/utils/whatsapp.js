@@ -4,7 +4,6 @@
 
 
 const WHATSAPP_URL = process.env.WHATSAPP_URL || 'https://wg.swiftproject.in/api/send';
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 
 /**
  * Format and sanitize phone numbers (removes '+', spaces, hyphens).
@@ -19,11 +18,8 @@ const sanitizePhone = (phone) => {
   return clean;
 };
 
-/**
- * Core function to send requests to WhatsApp API
- * @param {Object} payload 
- */
 const sendToWhatsAppAPI = async (payload) => {
+  const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
   if (!WHATSAPP_TOKEN) {
     console.warn('WHATSAPP_TOKEN is not set. Skipping WhatsApp message.');
     return null;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, ExternalLink, Sparkles } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 export default function RegisterRestaurant() {
   const [searchParams] = useSearchParams();
@@ -62,40 +63,45 @@ export default function RegisterRestaurant() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center border border-gray-100">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Submitted! 🎉</h2>
-          <p className="text-gray-600 mb-6">
-            Your restaurant registration has been submitted successfully. Our team will review your application.
-          </p>
-          <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg mb-8 font-medium border border-yellow-200">
-            Status: 🟡 Pending Approval
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center border border-gray-100">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Submitted!</h2>
+            <p className="text-gray-600 mb-6">
+              Your restaurant registration has been submitted successfully. Our team will review your application.
+            </p>
+            <div className="bg-yellow-50 text-yellow-800 p-4 rounded-lg mb-8 font-medium border border-yellow-200">
+              Status: Pending Approval
+            </div>
+            <p className="text-sm text-gray-500 mb-8">
+              You will receive a WhatsApp notification with your login details once your restaurant is approved.
+            </p>
+            <Link to="/" className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+              Return to Home
+            </Link>
           </div>
-          <p className="text-sm text-gray-500 mb-8">
-            You will receive a WhatsApp notification with your login details once your restaurant is approved.
-          </p>
-          <Link to="/" className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
-            Return to Home
-          </Link>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto w-full mb-8">
-        <Link to="/" className="inline-flex items-center text-orange-600 hover:text-orange-700 font-medium">
-          <ArrowLeft size={16} className="mr-2" /> Back to Home
-        </Link>
-        <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-          Register Your Restaurant
-        </h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Fill out the details below to start receiving orders digitally.
-        </p>
-      </div>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gray-50 flex flex-col py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto w-full mb-8">
+          <Link to="/" className="inline-flex items-center text-orange-600 hover:text-orange-700 font-medium">
+            <ArrowLeft size={16} className="mr-2" /> Back to Home
+          </Link>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Register Your Restaurant
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Fill out the details below to start receiving orders digitally.
+          </p>
+        </div>
 
       <div className="max-w-3xl mx-auto w-full">
         <form className="space-y-8" onSubmit={handleSubmit}>
@@ -214,6 +220,7 @@ export default function RegisterRestaurant() {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

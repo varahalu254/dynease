@@ -49,7 +49,7 @@ const path = require('path');
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve React App for any unknown non-api routes
-app.get('*', (req, res, next) => {
+app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
     return next();
   }

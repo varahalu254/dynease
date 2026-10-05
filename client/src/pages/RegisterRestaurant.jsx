@@ -92,7 +92,7 @@ export default function RegisterRestaurant() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Restaurant Name</label>
               <div className="mt-1">
-                <input name="name" type="text" required value={formData.name} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
+                <input name="name" type="text" required value={formData.name} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 text-gray-900 bg-white focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
               </div>
             </div>
 
@@ -100,14 +100,14 @@ export default function RegisterRestaurant() {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Owner Name</label>
                 <div className="mt-1">
-                  <input name="ownerName" type="text" required value={formData.ownerName} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
+                  <input name="ownerName" type="text" required value={formData.ownerName} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 text-gray-900 bg-white focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
                 </div>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700">Phone Number</label>
                 <div className="mt-1">
-                  <input name="phone" type="tel" required value={formData.phone} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
+                  <input name="phone" type="tel" required value={formData.phone} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 text-gray-900 bg-white focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
                 </div>
               </div>
             </div>
@@ -115,7 +115,7 @@ export default function RegisterRestaurant() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Email address</label>
               <div className="mt-1">
-                <input name="email" type="email" required value={formData.email} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
+                <input name="email" type="email" required value={formData.email} onChange={handleChange} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 text-gray-900 bg-white focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm" />
               </div>
             </div>
 

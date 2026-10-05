@@ -16,4 +16,6 @@ router.get('/requests', adminController.getPendingRequests);
 router.post('/requests/:id/approve', adminController.approveRequest);
 router.post('/requests/:id/reject', adminController.rejectRequest);
 
+router.post('/whatsapp/send', adminController.sendCustomMessage);
+
 module.exports = router;

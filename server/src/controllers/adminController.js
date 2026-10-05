@@ -115,3 +115,17 @@ exports.rejectRequest = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.sendCustomMessage = async (req, res, next) => {
+  try {
+    const { phone, message } = req.body;
+    if (!phone || !message) {
+      return res.status(400).json({ success: false, message: 'Phone and message are required' });
+    }
+    const result = await whatsapp.sendTextMessage(phone, message);
+    res.status(200).json({ success: true, message: 'Message sent successfully', data: result });
+  } catch (error) {
+    console.error('Custom message error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to send message: ' + error.message });
+  }
+};

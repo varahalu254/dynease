@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Store, Users, DollarSign, Settings, LogOut, Megaphone } from 'lucide-react';
+import { LayoutDashboard, Store, Users, DollarSign, Settings, LogOut, Megaphone, MessageSquare } from 'lucide-react';
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -10,6 +10,7 @@ export default function AdminLayout() {
     { name: 'Restaurant Management', path: '/admin/restaurants', icon: <Store size={20} /> },
     { name: 'Registration Requests', path: '/admin/requests', icon: <Store size={20} /> },
     { name: 'Ads Management', path: '/admin/ads', icon: <Megaphone size={20} /> },
+    { name: 'Custom Message', path: '/admin/messages', icon: <MessageSquare size={20} /> },
     { name: 'Users', path: '/admin/users', icon: <Users size={20} /> },
     { name: 'Revenue', path: '/admin/analytics', icon: <DollarSign size={20} /> },
     { name: 'Settings', path: '/admin/settings', icon: <Settings size={20} /> },

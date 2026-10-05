@@ -53,6 +53,11 @@ function App() {
             <Route path="restaurants" element={<RestaurantsManagement />} />
             <Route path="ads" element={<AdsManagement />} />
           </Route>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Admin Dashboard</div>} />
+            <Route path="restaurants" element={<RestaurantsManagement />} />
+            <Route path="ads" element={<AdsManagement />} />
+          </Route>
           <Route path="*" element={<div className="min-h-screen flex items-center justify-center font-bold text-gray-400">404 Admin Page Not Found</div>} />
         </Routes>
       </BrowserRouter>

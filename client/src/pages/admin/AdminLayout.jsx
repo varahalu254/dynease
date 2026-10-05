@@ -8,6 +8,7 @@ export default function AdminLayout() {
   const links = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
     { name: 'Restaurant Management', path: '/admin/restaurants', icon: <Store size={20} /> },
+    { name: 'Registration Requests', path: '/admin/requests', icon: <Store size={20} /> },
     { name: 'Ads Management', path: '/admin/ads', icon: <Megaphone size={20} /> },
     { name: 'Users', path: '/admin/users', icon: <Users size={20} /> },
     { name: 'Revenue', path: '/admin/analytics', icon: <DollarSign size={20} /> },

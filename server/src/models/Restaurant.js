@@ -59,6 +59,11 @@ const restaurantSchema = new mongoose.Schema({
     type: String,
     enum: ['FREE', 'STARTER', 'PRO', 'ENTERPRISE'],
     default: 'FREE'
+  },
+  status: {
+    type: String,
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    default: 'APPROVED'
   }
 }, { timestamps: true });
 

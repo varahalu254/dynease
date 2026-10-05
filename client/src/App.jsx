@@ -9,9 +9,11 @@ import TablesManagement from './pages/restaurant/TablesManagement';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdsManagement from './pages/admin/Adsmanagement';
 import RestaurantsManagement from './pages/admin/RestaurentsManagement';
+import RequestsManagement from './pages/admin/RequestsManagement';
 import RestaurantLayout from './pages/restaurant/Layout';
 import MenuManagement from './pages/restaurant/MenuManagement';
 import About from './pages/About';
+import RegisterRestaurant from './pages/RegisterRestaurant';
 
 function App() {
   const hostname = window.location.hostname;
@@ -51,11 +53,13 @@ function App() {
           <Route path="/" element={<AdminLayout />}>
             <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Admin Dashboard</div>} />
             <Route path="restaurants" element={<RestaurantsManagement />} />
+            <Route path="requests" element={<RequestsManagement />} />
             <Route path="ads" element={<AdsManagement />} />
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Admin Dashboard</div>} />
             <Route path="restaurants" element={<RestaurantsManagement />} />
+            <Route path="requests" element={<RequestsManagement />} />
             <Route path="ads" element={<AdsManagement />} />
           </Route>
           <Route path="*" element={<div className="min-h-screen flex items-center justify-center font-bold text-gray-400">404 Admin Page Not Found</div>} />
@@ -70,6 +74,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
         <Route path="/about" element={<About />} />
+        <Route path="/register" element={<RegisterRestaurant />} />
         
         {/* Customer Routes (Fallback for local dev like /r/test) */}
         <Route path="/r/:slug" element={<HomePage />} />
@@ -91,6 +96,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Admin Dashboard</div>} />
           <Route path="restaurants" element={<RestaurantsManagement />} />
+          <Route path="requests" element={<RequestsManagement />} />
           <Route path="ads" element={<AdsManagement />} />
         </Route>
       </Routes>

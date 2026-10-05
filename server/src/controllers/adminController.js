@@ -66,3 +66,41 @@ exports.getAllRestaurants = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getPendingRequests = async (req, res, next) => {
+  try {
+    const requests = await Restaurant.find({ status: 'PENDING' }).populate('ownerId', 'name email phone');
+    res.status(200).json({
+      success: true,
+      data: { requests }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.approveRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const restaurant = await Restaurant.findByIdAndUpdate(id, { status: 'APPROVED', isActive: true }, { new: true });
+    if (!restaurant) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+    res.status(200).json({ success: true, message: 'Restaurant approved successfully', data: { restaurant } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.rejectRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const restaurant = await Restaurant.findByIdAndUpdate(id, { status: 'REJECTED' }, { new: true });
+    if (!restaurant) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+    res.status(200).json({ success: true, message: 'Restaurant rejected successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

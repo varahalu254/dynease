@@ -12,4 +12,8 @@ const router = express.Router();
 router.post('/restaurants', adminController.createRestaurant);
 router.get('/restaurants', adminController.getAllRestaurants);
 
+router.get('/requests', adminController.getPendingRequests);
+router.post('/requests/:id/approve', adminController.approveRequest);
+router.post('/requests/:id/reject', adminController.rejectRequest);
+
 module.exports = router;

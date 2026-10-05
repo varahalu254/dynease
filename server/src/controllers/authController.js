@@ -31,14 +31,19 @@ exports.registerRestaurantOwner = async (req, res, next) => {
     const restaurant = await Restaurant.create({
       name,
       slug: slug + '-' + Math.floor(Math.random() * 1000), // Ensure uniqueness
-      ownerId: newUser._id
+      ownerId: newUser._id,
+      status: 'PENDING',
+      isActive: false
     });
 
     // Link restaurant to user
     newUser.restaurantId = restaurant._id;
     await newUser.save({ validateBeforeSave: false });
 
-    createSendToken(newUser, 201, res);
+    res.status(201).json({
+      success: true,
+      message: 'Registration request submitted! Please wait for admin approval.'
+    });
   } catch (error) {
     next(error);
   }

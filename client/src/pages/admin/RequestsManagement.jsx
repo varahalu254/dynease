@@ -99,6 +99,7 @@ export default function RequestsManagement() {
                     <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded">PENDING</span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">{request.type}</p>
+                  <p className="text-sm text-orange-600 mb-2 font-medium">{request.slug}.dynease.in</p>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Owner: {request.ownerId?.name}</span>
                     <span className="font-semibold text-orange-600">{request.selectedPlan}</span>
@@ -125,6 +126,7 @@ export default function RequestsManagement() {
                 <div className="space-y-3">
                   <p className="text-gray-900"><span className="font-medium text-gray-500 w-32 inline-block">Name:</span> {selectedReq.name}</p>
                   <p className="text-gray-900"><span className="font-medium text-gray-500 w-32 inline-block">Type:</span> {selectedReq.type}</p>
+                  <p className="text-gray-900"><span className="font-medium text-gray-500 w-32 inline-block">Domain:</span> {selectedReq.slug}.dynease.in</p>
                   <p className="text-gray-900"><span className="font-medium text-gray-500 w-32 inline-block">Phone:</span> {selectedReq.phone}</p>
                   <p className="text-gray-900"><span className="font-medium text-gray-500 w-32 inline-block">Email:</span> {selectedReq.email || 'N/A'}</p>
                 </div>

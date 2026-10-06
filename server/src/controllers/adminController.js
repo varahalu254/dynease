@@ -357,8 +357,8 @@ exports.sendCredentials = async (req, res, next) => {
     let waSent = false;
     if (user.phone) {
       try {
-        const loginUrl = `http://${registry.subdomain}.localhost:5173/login`;
-        const message = `🎉 Your login credentials have been reset!\n\nYou can login at: ${loginUrl}\n\nYour login credentials:\nMobile Number: ${user.phone}\nPassword: ${tempPassword}`;
+        const loginUrl = `https://${registry.subdomain}.dynease.in/login`;
+        const message = `🎉 Your login credentials have been created/reset!\n\nYou can login at: ${loginUrl}\n\nYour login credentials:\nMobile Number: ${user.phone}\nPassword: ${tempPassword}`;
         await whatsapp.sendTextMessage(user.phone, message);
         waSent = true;
       } catch (e) {

@@ -1,4 +1,3 @@
-const MenuItem = require('../models/MenuItem');
 const { uploadToCloudinary } = require('../utils/cloudinary');
 
 exports.createMenuItem = async (req, res) => {
@@ -20,6 +19,7 @@ exports.createMenuItem = async (req, res) => {
       }
     }
 
+    const MenuItem = req.tenantDb.model('MenuItem');
     const menuItem = await MenuItem.create({
       restaurantId,
       category,
@@ -42,6 +42,7 @@ exports.createMenuItem = async (req, res) => {
 exports.getMenu = async (req, res) => {
   try {
     const restaurantId = req.user.restaurantId;
+    const MenuItem = req.tenantDb.model('MenuItem');
     const menuItems = await MenuItem.find({ restaurantId }).sort('-createdAt');
     res.status(200).json({ success: true, data: { menuItems } });
   } catch (error) {

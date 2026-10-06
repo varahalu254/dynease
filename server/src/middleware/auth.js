@@ -17,7 +17,14 @@ const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_prod');
 
     // Check if user still exists
-    const currentUser = await User.findById(decoded.id);
+    let currentUser;
+    if (req.tenantDb) {
+      const TenantUser = req.tenantDb.model('User');
+      currentUser = await TenantUser.findById(decoded.id);
+    } else {
+      currentUser = await User.findById(decoded.id);
+    }
+
     if (!currentUser) {
       return res.status(401).json({ success: false, message: 'The user belonging to this token does no longer exist.' });
     }

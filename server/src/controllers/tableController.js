@@ -1,9 +1,9 @@
-const Table = require('../models/Table');
-const Restaurant = require('../models/Restaurant');
+// Tenant DB models are retrieved dynamically via req.tenantDb
 const crypto = require('crypto');
 
 exports.getTables = async (req, res, next) => {
   try {
+    const Table = req.tenantDb.model('Table');
     const restaurantId = req.user.restaurantId;
     const tables = await Table.find({ restaurantId }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: { tables } });
@@ -14,6 +14,7 @@ exports.getTables = async (req, res, next) => {
 
 exports.getTable = async (req, res, next) => {
   try {
+    const Table = req.tenantDb.model('Table');
     const table = await Table.findOne({ _id: req.params.id, restaurantId: req.user.restaurantId });
     if (!table) return res.status(404).json({ success: false, message: 'Table not found' });
     res.status(200).json({ success: true, data: { table } });
@@ -24,6 +25,7 @@ exports.getTable = async (req, res, next) => {
 
 exports.createTable = async (req, res, next) => {
   try {
+    const Table = req.tenantDb.model('Table');
     const restaurantId = req.user.restaurantId;
     const { tableNumber, tableName } = req.body;
 
@@ -33,12 +35,16 @@ exports.createTable = async (req, res, next) => {
     }
 
     const qrToken = crypto.randomBytes(16).toString('hex');
+    const domain = process.env.NODE_ENV === 'production' 
+      ? `https://${req.tenantRegistry.subdomain}.dynease.in` 
+      : `http://${req.tenantRegistry.subdomain}.localhost:5173`;
+    
     const table = await Table.create({
       restaurantId,
       tableNumber,
       tableName,
       qrToken,
-      qrCodeUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/menu/${qrToken}`
+      qrCodeUrl: `${domain}/menu/${qrToken}`
     });
 
     res.status(201).json({ success: true, data: { table } });
@@ -49,6 +55,7 @@ exports.createTable = async (req, res, next) => {
 
 exports.updateTable = async (req, res, next) => {
   try {
+    const Table = req.tenantDb.model('Table');
     const { tableNumber, tableName, status } = req.body;
     const updateData = {};
     if (tableNumber) updateData.tableNumber = tableNumber;
@@ -69,6 +76,7 @@ exports.updateTable = async (req, res, next) => {
 
 exports.deleteTable = async (req, res, next) => {
   try {
+    const Table = req.tenantDb.model('Table');
     const table = await Table.findOneAndDelete({ _id: req.params.id, restaurantId: req.user.restaurantId });
     if (!table) return res.status(404).json({ success: false, message: 'Table not found' });
     res.status(200).json({ success: true, message: 'Table deleted successfully' });
@@ -79,12 +87,16 @@ exports.deleteTable = async (req, res, next) => {
 
 exports.regenerateQR = async (req, res, next) => {
   try {
+    const Table = req.tenantDb.model('Table');
     const table = await Table.findOne({ _id: req.params.id, restaurantId: req.user.restaurantId });
     if (!table) return res.status(404).json({ success: false, message: 'Table not found' });
     
     const qrToken = crypto.randomBytes(16).toString('hex');
     table.qrToken = qrToken;
-    table.qrCodeUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/menu/${qrToken}`;
+    const domain = process.env.NODE_ENV === 'production' 
+      ? `https://${req.tenantRegistry.subdomain}.dynease.in` 
+      : `http://${req.tenantRegistry.subdomain}.localhost:5173`;
+    table.qrCodeUrl = `${domain}/menu/${qrToken}`;
     await table.save();
     
     res.status(200).json({ success: true, data: { table } });

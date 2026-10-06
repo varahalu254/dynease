@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
 import HomePage from './pages/customer/HomePage';
@@ -24,6 +25,29 @@ import Pricing from './pages/Pricing';
 import RegisterRestaurant from './pages/RegisterRestaurant';
 import HowItWorks from './pages/HowItWorks';
 import Features from './pages/Features';
+import RestaurantDashboard from './pages/restaurant/Dashboard';
+import { Loader2 } from 'lucide-react';
+
+function SubdomainWrapper({ subdomain, children }) {
+  const [isValid, setIsValid] = useState(null);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/public/restaurant/${subdomain}/menu`, {
+      headers: { 'x-tenant-subdomain': subdomain }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setIsValid(true);
+        else setIsValid(false);
+      })
+      .catch(() => setIsValid(false));
+  }, [subdomain]);
+
+  if (isValid === null) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><Loader2 className="animate-spin text-orange-500 w-8 h-8" /></div>;
+  if (isValid === false) return <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 text-center"><h1 className="text-4xl text-gray-800 font-bold mb-2">404</h1><p className="text-gray-500 text-lg">Page not available</p></div>;
+
+  return children;
+}
 
 function App() {
   const hostname = window.location.hostname;
@@ -42,24 +66,26 @@ function App() {
   // If a valid restaurant subdomain is detected, isolate the routing to just that restaurant
   if (subdomain && subdomain !== 'admin' && subdomain !== 'www') {
     return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage forcedSlug={subdomain} />} />
-          <Route path="/t/:tableId" element={<HomePage forcedSlug={subdomain} />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<RegisterRestaurant />} />
-          <Route path="/item/:id" element={<ItemDescription />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/feedback" element={<FeedbackForm />} />
-          <Route path="/admin" element={<Navigate to="/restaurant" replace />} />
-          <Route path="/restaurant" element={<RestaurantLayout />}>
-            <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Restaurant Dashboard</div>} />
-            <Route path="menu" element={<MenuManagement />} />
-            <Route path="tables" element={<TablesManagement />} />
-          </Route>
-          <Route path="*" element={<div className="min-h-screen flex flex-col items-center justify-center p-10 text-center font-bold text-gray-400"><h1 className="text-4xl text-gray-800 mb-2">404</h1>Page not found on this restaurant</div>} />
-        </Routes>
-      </BrowserRouter>
+      <SubdomainWrapper subdomain={subdomain}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage forcedSlug={subdomain} />} />
+            <Route path="/t/:tableId" element={<HomePage forcedSlug={subdomain} />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<RegisterRestaurant />} />
+            <Route path="/item/:id" element={<ItemDescription />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/feedback" element={<FeedbackForm />} />
+            <Route path="/admin" element={<Navigate to="/restaurant" replace />} />
+            <Route path="/restaurant" element={<RestaurantLayout />}>
+            <Route index element={<RestaurantDashboard />} />
+              <Route path="menu" element={<MenuManagement />} />
+              <Route path="tables" element={<TablesManagement />} />
+            </Route>
+            <Route path="*" element={<div className="min-h-screen flex flex-col items-center justify-center p-10 text-center font-bold text-gray-400"><h1 className="text-4xl text-gray-800 mb-2">404</h1>Page not found on this restaurant</div>} />
+          </Routes>
+        </BrowserRouter>
+      </SubdomainWrapper>
     );
   }
 
@@ -119,7 +145,7 @@ function App() {
         
         {/* Restaurant Routes */}
         <Route path="/restaurant" element={<RestaurantLayout />}>
-          <Route index element={<div className="p-6 font-bold text-xl text-gray-800">Restaurant Dashboard</div>} />
+          <Route index element={<RestaurantDashboard />} />
           <Route path="menu" element={<MenuManagement />} />
           <Route path="tables" element={<TablesManagement />} />
         </Route>

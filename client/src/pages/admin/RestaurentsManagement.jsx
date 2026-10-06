@@ -9,11 +9,15 @@ export default function RestaurantsManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [sendingCredentials, setSendingCredentials] = useState({});
+  const [togglingStatus, setTogglingStatus] = useState(null);
 
   const [editFormData, setEditFormData] = useState({
     name: '',
     subscriptionPlan: 'FREE',
-    isActive: true
+    isActive: true,
+    ownerName: '',
+    ownerEmail: '',
+    ownerPhone: ''
   });
 
   const [formData, setFormData] = useState({
@@ -105,7 +109,10 @@ export default function RestaurantsManagement() {
     setEditFormData({
       name: restaurant.name,
       subscriptionPlan: restaurant.subscriptionPlan || 'FREE',
-      isActive: restaurant.isActive
+      isActive: restaurant.isActive,
+      ownerName: restaurant.ownerId?.name || '',
+      ownerEmail: restaurant.ownerId?.email || '',
+      ownerPhone: restaurant.ownerId?.phone || ''
     });
     setShowEditModal(true);
   };
@@ -128,6 +135,33 @@ export default function RestaurantsManagement() {
     } catch (err) {
       alert('Network error.');
       setSendingCredentials(prev => ({ ...prev, [restaurantId]: 'idle' }));
+    }
+  };
+
+  const handleToggleStatus = async (restaurant) => {
+    setTogglingStatus(restaurant._id);
+    try {
+      const newStatus = !(restaurant.isActive || restaurant.status === 'ACTIVE');
+      
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/restaurants/${restaurant._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: restaurant.name,
+          subscriptionPlan: restaurant.selectedPlan || 'FREE',
+          isActive: newStatus
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchRestaurants();
+      } else {
+        alert(data.message || 'Failed to toggle status');
+      }
+    } catch (err) {
+      alert('Network error while toggling status');
+    } finally {
+      setTogglingStatus(null);
     }
   };
 
@@ -213,9 +247,25 @@ export default function RestaurantsManagement() {
                     <div className="text-xs text-gray-400">{res.ownerId?.phone || res.ownerId?.email || ''}</div>
                   </td>
                   <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${res.isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {res.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => handleToggleStatus(res)}
+                        disabled={togglingStatus === res._id}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                          (res.isActive || res.status === 'ACTIVE') ? 'bg-green-500' : 'bg-gray-300'
+                        } ${togglingStatus === res._id ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+                      >
+                        <span className="sr-only">Toggle status</span>
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            (res.isActive || res.status === 'ACTIVE') ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <span className="ml-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {res.isActive || res.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
                   </td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${res.subscriptionPlan === 'PRO' ? 'bg-purple-100 text-purple-700' : res.subscriptionPlan === 'GROWTH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
@@ -307,6 +357,20 @@ export default function RestaurantsManagement() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Restaurant Name</label>
                 <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} required className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Owner Name</label>
+                  <input type="text" name="ownerName" value={editFormData.ownerName} onChange={handleEditChange} className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Owner Phone</label>
+                  <input type="tel" name="ownerPhone" value={editFormData.ownerPhone} onChange={handleEditChange} pattern="\d{10}" maxLength="10" className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Owner Email</label>
+                <input type="email" name="ownerEmail" value={editFormData.ownerEmail} onChange={handleEditChange} className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
+              </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Subscription Plan</label>
                 <select name="subscriptionPlan" value={editFormData.subscriptionPlan} onChange={handleEditChange} className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 text-gray-900 bg-white">
@@ -320,10 +384,6 @@ export default function RestaurantsManagement() {
                     </>
                   )}
                 </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="isActive" name="isActive" checked={editFormData.isActive} onChange={handleEditChange} className="w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500" />
-                <label htmlFor="isActive" className="text-sm font-semibold text-gray-700">Account Active</label>
               </div>
 
               <div className="pt-4 flex gap-3">

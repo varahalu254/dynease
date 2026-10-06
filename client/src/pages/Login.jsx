@@ -27,9 +27,22 @@ export default function Login() {
     setError('');
 
     try {
+      const currentHostname = window.location.hostname;
+      let subdomain = '';
+      if (currentHostname.includes('localhost') && currentHostname !== 'localhost') {
+        subdomain = currentHostname.split('.')[0];
+      } else if (currentHostname.includes('dynease.in') && currentHostname !== 'dynease.in') {
+        subdomain = currentHostname.split('.')[0];
+      }
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (subdomain && subdomain !== 'admin') {
+        headers['x-tenant-subdomain'] = subdomain;
+      }
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify(formData)
       });
       const data = await res.json();

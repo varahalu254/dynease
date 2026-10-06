@@ -1,8 +1,13 @@
-const User = require('../models/User');
-const Restaurant = require('../models/Restaurant');
+const User = require('../models/User'); // Platform admin users
+const Restaurant = require('../models/Restaurant'); // Keep for backward compat for now
+const RestaurantRegistration = require('../models/platform/RestaurantRegistration');
+const RestaurantRegistry = require('../models/platform/RestaurantRegistry');
+const RestaurantProvisioningService = require('../services/RestaurantProvisioningService');
 const Order = require('../models/Order');
 const SubscriptionPlan = require('../models/SubscriptionPlan');
 const whatsapp = require('../utils/whatsapp');
+const TenantDatabaseManager = require('../services/TenantDatabaseManager');
+const bcrypt = require('bcrypt');
 
 exports.createRestaurant = async (req, res, next) => {
   try {
@@ -12,54 +17,44 @@ exports.createRestaurant = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
     }
 
-    // Check if email already exists
-    const existingUser = await User.findOne({ email: ownerEmail });
-    if (existingUser) {
-      return res.status(409).json({ success: false, message: 'Owner email already exists in the system.' });
+    // Check if the owner email is already taken in the global registry
+    const existingRegistry = await RestaurantRegistry.findOne({ ownerEmail });
+    if (existingRegistry) {
+      return res.status(409).json({ success: false, message: 'A restaurant with this owner email already exists.' });
     }
 
-    // Create the new Owner User
-    const newUser = await User.create({
-      name: ownerName,
-      email: ownerEmail,
-      password: ownerPassword,
-      phone: ownerPhone,
-      role: 'RESTAURANT_OWNER'
-    });
-
-    // Generate a unique slug for the restaurant
+    // Generate a unique subdomain
     let baseSlug = restaurantName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     let slug = baseSlug;
-    let slugExists = await Restaurant.findOne({ slug });
+    let slugExists = await RestaurantRegistry.findOne({ subdomain: slug });
     let counter = 1;
     
     while (slugExists) {
       slug = `${baseSlug}-${counter}`;
-      slugExists = await Restaurant.findOne({ slug });
+      slugExists = await RestaurantRegistry.findOne({ subdomain: slug });
       counter++;
     }
     
-    // Create the Restaurant
-    const restaurant = await Restaurant.create({
-      name: restaurantName,
-      slug: slug,
-      ownerId: newUser._id
-    });
+    const hashedPassword = await bcrypt.hash(ownerPassword, 12);
 
-    // Link the restaurant ID back to the owner
-    newUser.restaurantId = restaurant._id;
-    await newUser.save({ validateBeforeSave: false });
+    const registrationMock = {
+      restaurantName,
+      restaurantType: 'Restaurant',
+      subdomain: slug,
+      ownerName,
+      ownerPhone,
+      ownerEmail,
+      ownerPassword: hashedPassword,
+      selectedPlan: 'FREE'
+    };
+
+    const registry = await RestaurantProvisioningService.provisionRestaurant(registrationMock);
 
     res.status(201).json({
       success: true,
       message: 'Restaurant and Owner account created successfully.',
       data: {
-        restaurant,
-        owner: {
-          id: newUser._id,
-          name: newUser.name,
-          email: newUser.email
-        }
+        restaurant: registry
       }
     });
   } catch (error) {
@@ -69,10 +64,24 @@ exports.createRestaurant = async (req, res, next) => {
 
 exports.getAllRestaurants = async (req, res, next) => {
   try {
-    const restaurants = await Restaurant.find().populate('ownerId', 'name email phone');
+    const restaurants = await RestaurantRegistry.find();
+    // Map to expected format to not break the frontend
+    const mapped = restaurants.map(r => ({
+      _id: r.restaurantId,
+      name: r.restaurantName,
+      slug: r.slug,
+      subdomain: r.subdomain,
+      status: r.status,
+      selectedPlan: r.selectedPlan,
+      ownerId: {
+        name: r.ownerName || 'Owner', 
+        email: r.ownerEmail,
+        phone: r.ownerPhone
+      }
+    }));
     res.status(200).json({
       success: true,
-      data: { restaurants }
+      data: { restaurants: mapped }
     });
   } catch (error) {
     next(error);
@@ -81,10 +90,25 @@ exports.getAllRestaurants = async (req, res, next) => {
 
 exports.getPendingRequests = async (req, res, next) => {
   try {
-    const requests = await Restaurant.find({ status: 'PENDING_APPROVAL' }).populate('ownerId', 'name email phone');
+    const requests = await RestaurantRegistration.find({ status: 'PENDING_APPROVAL' });
+    // Map to frontend expected format
+    const formattedRequests = requests.map(req => ({
+      _id: req._id,
+      name: req.restaurantName,
+      type: req.restaurantType,
+      slug: req.subdomain,
+      status: req.status,
+      selectedPlan: req.selectedPlan,
+      createdAt: req.createdAt,
+      ownerId: {
+        name: req.ownerName,
+        email: req.ownerEmail,
+        phone: req.ownerPhone
+      }
+    }));
     res.status(200).json({
       success: true,
-      data: { requests }
+      data: { requests: formattedRequests }
     });
   } catch (error) {
     next(error);
@@ -94,45 +118,34 @@ exports.getPendingRequests = async (req, res, next) => {
 exports.approveRequest = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const adminId = req.user ? req.user.id : null; // Assuming req.user is set by auth middleware
-
-    const restaurant = await Restaurant.findById(id).populate('ownerId');
-    if (!restaurant) {
-      return res.status(404).json({ success: false, message: 'Request not found' });
+    
+    const registration = await RestaurantRegistration.findById(id);
+    if (!registration) {
+      return res.status(404).json({ success: false, message: 'Registration request not found' });
     }
 
-    if (restaurant.status === 'APPROVED') {
-      return res.status(400).json({ success: false, message: 'Restaurant is already approved' });
+    if (registration.status === 'APPROVED') {
+      return res.status(400).json({ success: false, message: 'Registration is already approved' });
     }
 
-    // Update restaurant
-    restaurant.status = 'APPROVED';
-    restaurant.isActive = true;
-    restaurant.approvedAt = new Date();
-    if (adminId) restaurant.approvedBy = adminId;
-    if (restaurant.subscriptionStatus === 'TRIAL') {
-      restaurant.subscriptionStatus = 'ACTIVE'; // or trial
-    }
-    await restaurant.save();
+    // Provision Tenant Database
+    const registry = await RestaurantProvisioningService.provisionRestaurant(registration);
 
-    // Activate user and generate temporary password
-    const user = restaurant.ownerId;
-    user.isActive = true;
-    const tempPassword = 'Welcome' + Math.floor(1000 + Math.random() * 9000) + '!';
-    user.password = tempPassword;
-    await user.save();
+    // Update Registration Status
+    registration.status = 'APPROVED';
+    await registration.save();
 
-      if (user.phone) {
-        try {
-          const loginUrl = `http://${restaurant.slug}.dynease.in/login`;
-          const message = `🎉 Your account is approved!\n\nYou can login at: ${loginUrl}\n\nYour login credentials:\nMobile Number: ${user.phone}\nPassword: ${tempPassword}`;
-          await whatsapp.sendTextMessage(user.phone, message);
-        } catch (waError) {
+    if (registration.ownerPhone) {
+      try {
+        const loginUrl = `https://${registry.subdomain}.dynease.in/login`;
+        const message = `🎉 Your restaurant has been approved!\n\nRestaurant: ${registry.restaurantName}\nPlan: ${registry.selectedPlan}\n\nYour restaurant account is now active.\n\nRestaurant URL:\nhttps://${registry.subdomain}.dynease.in\n\nLogin to Dashboard:\n${loginUrl}\n\nYou can now configure your menu, tables and QR codes.`;
+        await whatsapp.sendTextMessage(registration.ownerPhone, message);
+      } catch (waError) {
         console.error('Failed to send WhatsApp approval notification:', waError.message);
       }
     }
 
-    res.status(200).json({ success: true, message: 'Restaurant approved successfully', data: { restaurant } });
+    res.status(200).json({ success: true, message: 'Restaurant approved and database provisioned successfully', data: { registry } });
   } catch (error) {
     next(error);
   }
@@ -163,10 +176,20 @@ exports.rejectRequest = async (req, res, next) => {
 exports.suspendRestaurant = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const restaurant = await Restaurant.findByIdAndUpdate(id, { status: 'SUSPENDED', isActive: false }, { new: true });
+    const restaurant = await RestaurantRegistry.findOneAndUpdate({ restaurantId: id }, { status: 'SUSPENDED' }, { new: true });
     if (!restaurant) {
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
     }
+    
+    // Also update tenant DB
+    try {
+      const tenantDb = await TenantDatabaseManager.getConnection(restaurant.databaseName);
+      const RestaurantProfile = tenantDb.model('RestaurantProfile');
+      await RestaurantProfile.findOneAndUpdate({ restaurantId: id }, { isActive: false });
+    } catch (e) {
+      console.error('Failed to suspend tenant DB profile:', e);
+    }
+    
     res.status(200).json({ success: true, message: 'Restaurant suspended successfully' });
   } catch (error) {
     next(error);
@@ -198,14 +221,28 @@ exports.getAllUsers = async (req, res, next) => {
 
 exports.getAnalytics = async (req, res, next) => {
   try {
-    const totalRestaurants = await Restaurant.countDocuments();
-    const activeRestaurants = await Restaurant.countDocuments({ isActive: true });
-    const totalUsers = await User.countDocuments();
+    const totalRestaurants = await RestaurantRegistry.countDocuments();
+    const activeRestaurants = await RestaurantRegistry.countDocuments({ status: 'ACTIVE' });
     
-    // Calculate total revenue and total orders
-    const orders = await Order.find({ paymentStatus: 'PAID' });
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-    const totalOrders = await Order.countDocuments();
+    // We don't have a global User count anymore since staff is split. Just counting registries for now.
+    const totalUsers = activeRestaurants; 
+    
+    // Calculate total revenue and total orders by querying all active tenant DBs
+    let totalRevenue = 0;
+    let totalOrders = 0;
+
+    const activeRegistries = await RestaurantRegistry.find({ status: 'ACTIVE' });
+    for (const registry of activeRegistries) {
+      try {
+        const tenantDb = await TenantDatabaseManager.getConnection(registry.databaseName);
+        const Order = tenantDb.model('Order');
+        const orders = await Order.find({ paymentStatus: 'PAID' });
+        totalRevenue += orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        totalOrders += await Order.countDocuments();
+      } catch (err) {
+        console.error(`Failed to get analytics for tenant ${registry.databaseName}:`, err);
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -225,15 +262,44 @@ exports.getAnalytics = async (req, res, next) => {
 exports.updateRestaurant = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, subscriptionPlan, isActive } = req.body;
-    const restaurant = await Restaurant.findByIdAndUpdate(
-      id,
-      { name, selectedPlan: subscriptionPlan, isActive },
+    const { name, subscriptionPlan, isActive, ownerEmail, ownerName, ownerPhone } = req.body;
+    
+    const status = isActive ? 'ACTIVE' : 'SUSPENDED';
+    const updateData = { restaurantName: name, selectedPlan: subscriptionPlan, status };
+    if (ownerEmail) updateData.ownerEmail = ownerEmail;
+    if (ownerName) updateData.ownerName = ownerName;
+    if (ownerPhone) updateData.ownerPhone = ownerPhone;
+
+    const restaurant = await RestaurantRegistry.findOneAndUpdate(
+      { restaurantId: id },
+      updateData,
       { new: true, runValidators: true }
     );
     if (!restaurant) {
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
     }
+    
+    // Update tenant DB
+    try {
+      const tenantDb = await TenantDatabaseManager.getConnection(restaurant.databaseName);
+      const RestaurantProfile = tenantDb.model('RestaurantProfile');
+      await RestaurantProfile.findOneAndUpdate({ restaurantId: id }, { name, isActive });
+
+      if (ownerEmail || ownerName || ownerPhone) {
+        const TenantUser = tenantDb.model('User');
+        const userUpdateData = {};
+        if (ownerEmail) userUpdateData.email = ownerEmail;
+        if (ownerName) userUpdateData.name = ownerName;
+        if (ownerPhone) userUpdateData.phone = ownerPhone;
+        
+        // Use findOneAndUpdate matching the old email to avoid losing the user record if only email changed.
+        // Wait, if email changed, we have to find by old email. We can find by role: 'RESTAURANT_OWNER'
+        await TenantUser.findOneAndUpdate({ role: 'RESTAURANT_OWNER' }, userUpdateData);
+      }
+    } catch (e) {
+      console.error('Failed to update tenant DB profile:', e);
+    }
+    
     res.status(200).json({ success: true, message: 'Restaurant updated successfully', data: { restaurant } });
   } catch (error) {
     next(error);
@@ -243,12 +309,19 @@ exports.updateRestaurant = async (req, res, next) => {
 exports.deleteRestaurant = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const restaurant = await Restaurant.findByIdAndDelete(id);
+    const restaurant = await RestaurantRegistry.findOneAndDelete({ restaurantId: id });
     if (!restaurant) {
       return res.status(404).json({ success: false, message: 'Restaurant not found' });
     }
-    await User.deleteMany({ restaurantId: id }); // Delete associated users
-    res.status(200).json({ success: true, message: 'Restaurant and associated users deleted successfully' });
+    // Note: To completely delete, we'd drop the tenant DB. For now, removing the registry entry disables access.
+    try {
+       const tenantDb = await TenantDatabaseManager.getConnection(restaurant.databaseName);
+       if (tenantDb) await tenantDb.dropDatabase();
+    } catch (e) {
+       console.error('Failed to drop tenant database:', e);
+    }
+
+    res.status(200).json({ success: true, message: 'Restaurant deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -257,23 +330,41 @@ exports.deleteRestaurant = async (req, res, next) => {
 exports.sendCredentials = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const restaurant = await Restaurant.findById(id).populate('ownerId');
-    if (!restaurant || !restaurant.ownerId) {
+    const registry = await RestaurantRegistry.findOne({ restaurantId: id });
+    if (!registry || !registry.ownerEmail) {
       return res.status(404).json({ success: false, message: 'Restaurant or owner not found' });
     }
 
-    const user = restaurant.ownerId;
+    const tenantDb = await TenantDatabaseManager.getConnection(registry.databaseName);
+    const TenantUser = tenantDb.model('User');
+    const user = await TenantUser.findOne({ email: registry.ownerEmail });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Owner user not found in tenant database' });
+    }
+
     const tempPassword = 'Welcome' + Math.floor(1000 + Math.random() * 9000) + '!';
     user.password = tempPassword;
     await user.save();
 
+    let waSent = false;
     if (user.phone) {
-      const loginUrl = `http://${restaurant.slug}.dynease.in/login`;
-      const message = `🎉 Your login credentials have been reset!\n\nYou can login at: ${loginUrl}\n\nYour login credentials:\nMobile Number: ${user.phone}\nPassword: ${tempPassword}`;
-      await whatsapp.sendTextMessage(user.phone, message);
+      try {
+        const loginUrl = `http://${registry.subdomain}.localhost:5173/login`;
+        const message = `🎉 Your login credentials have been reset!\n\nYou can login at: ${loginUrl}\n\nYour login credentials:\nMobile Number: ${user.phone}\nPassword: ${tempPassword}`;
+        await whatsapp.sendTextMessage(user.phone, message);
+        waSent = true;
+      } catch (e) {
+        console.error('WhatsApp message failed to send:', e.message);
+      }
     }
 
-    res.status(200).json({ success: true, message: 'Credentials sent to owner successfully via WhatsApp.' });
+    res.status(200).json({ 
+      success: true, 
+      message: waSent 
+        ? 'Credentials sent to owner successfully via WhatsApp.' 
+        : `Password reset successfully. (WhatsApp failed, new password is: ${tempPassword})`
+    });
   } catch (error) {
     next(error);
   }

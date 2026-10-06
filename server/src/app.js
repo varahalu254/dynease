@@ -40,12 +40,18 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+const tenantResolver = require('./middlewares/tenantResolver');
+
 // Mount Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/restaurant/tables', tableRoutes);
-app.use('/api/restaurant', restaurantRoutes);
-app.use('/api/public', publicRoutes);
+
+// Apply tenantResolver to APIs that need tenant context
+app.use('/api/auth', tenantResolver, authRoutes);
+
+// Apply tenantResolver to APIs that need tenant context
+app.use('/api/restaurant', tenantResolver, restaurantRoutes);
+app.use('/api/restaurant/tables', tenantResolver, tableRoutes);
+app.use('/api/public', tenantResolver, publicRoutes);
 
 // Routes
 app.get('/health', (req, res) => {

@@ -22,6 +22,6 @@ const registrationSchema = new mongoose.Schema({
     enum: ['PENDING_APPROVAL', 'APPROVED', 'REJECTED'],
     default: 'PENDING_APPROVAL'
   }
-}, { timestamps: true });
+}, { timestamps: true, collection: 'restaurant_requests' });
 
 module.exports = mongoose.model('RestaurantRegistration', registrationSchema);

@@ -20,6 +20,6 @@ const subscriptionPlanSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   }
-}, { timestamps: true });
+}, { timestamps: true, collection: 'subscription_plans' });
 
 module.exports = mongoose.model('SubscriptionPlan', subscriptionPlanSchema);

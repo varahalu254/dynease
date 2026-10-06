@@ -65,7 +65,7 @@ const restaurantRegistrySchema = new mongoose.Schema({
     default: false
   },
   databaseProvisionedAt: Date
-}, { timestamps: true });
+}, { timestamps: true, collection: 'restaurant_details' });
 
 // Always use default mongoose connection for platform DB
 module.exports = mongoose.model('RestaurantRegistry', restaurantRegistrySchema);

@@ -103,6 +103,22 @@ class RestaurantProvisioningService {
         { upsert: true, new: true }
       );
 
+      // Create Owner Account in Global Platform DB (so they exist in 'users' collection)
+      const GlobalUser = require('../models/User');
+      await GlobalUser.findOneAndUpdate(
+        { email: registry.ownerEmail },
+        {
+          name: registration.ownerName || 'Restaurant Owner',
+          email: registry.ownerEmail,
+          password: registration.ownerPassword, // Already hashed
+          role: 'RESTAURANT_OWNER',
+          phone: registration.ownerPhone,
+          isActive: true,
+          emailVerified: true
+        },
+        { upsert: true, new: true }
+      );
+
       // Mark Provisioning Complete
       registry.databaseProvisioned = true;
       registry.databaseProvisionedAt = new Date();

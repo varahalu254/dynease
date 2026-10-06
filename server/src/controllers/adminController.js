@@ -131,9 +131,8 @@ exports.approveRequest = async (req, res, next) => {
     // Provision Tenant Database
     const registry = await RestaurantProvisioningService.provisionRestaurant(registration);
 
-    // Update Registration Status
-    registration.status = 'APPROVED';
-    await registration.save();
+    // Remove from requests collection once approved and moved to details
+    await RestaurantRegistration.findByIdAndDelete(id);
 
     if (registration.ownerPhone) {
       try {
@@ -157,14 +156,11 @@ exports.rejectRequest = async (req, res, next) => {
     const { reason } = req.body;
     const adminId = req.user ? req.user.id : null;
 
-    const restaurant = await Restaurant.findByIdAndUpdate(id, { 
+    const registration = await RestaurantRegistration.findByIdAndUpdate(id, { 
       status: 'REJECTED', 
-      rejectionReason: reason || 'Does not meet platform requirements',
-      rejectedAt: new Date(),
-      rejectedBy: adminId
     }, { new: true });
     
-    if (!restaurant) {
+    if (!registration) {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
     res.status(200).json({ success: true, message: 'Restaurant rejected successfully' });
@@ -262,13 +258,22 @@ exports.getAnalytics = async (req, res, next) => {
 exports.updateRestaurant = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, subscriptionPlan, isActive, ownerEmail, ownerName, ownerPhone } = req.body;
+    const { name, subscriptionPlan, isActive, ownerEmail, ownerName, ownerPhone, subdomain } = req.body;
     
     const status = isActive ? 'ACTIVE' : 'SUSPENDED';
     const updateData = { restaurantName: name, selectedPlan: subscriptionPlan, status };
     if (ownerEmail) updateData.ownerEmail = ownerEmail;
     if (ownerName) updateData.ownerName = ownerName;
     if (ownerPhone) updateData.ownerPhone = ownerPhone;
+    
+    if (subdomain) {
+      const existing = await RestaurantRegistry.findOne({ subdomain, restaurantId: { $ne: id } });
+      if (existing) {
+        return res.status(409).json({ success: false, message: 'This subdomain is already taken.' });
+      }
+      updateData.subdomain = subdomain;
+      updateData.slug = subdomain;
+    }
 
     const restaurant = await RestaurantRegistry.findOneAndUpdate(
       { restaurantId: id },
@@ -283,7 +288,9 @@ exports.updateRestaurant = async (req, res, next) => {
     try {
       const tenantDb = await TenantDatabaseManager.getConnection(restaurant.databaseName);
       const RestaurantProfile = tenantDb.model('RestaurantProfile');
-      await RestaurantProfile.findOneAndUpdate({ restaurantId: id }, { name, isActive });
+      const profileUpdateData = { name, isActive };
+      if (subdomain) profileUpdateData.slug = subdomain;
+      await RestaurantProfile.findOneAndUpdate({ restaurantId: id }, profileUpdateData);
 
       if (ownerEmail || ownerName || ownerPhone) {
         const TenantUser = tenantDb.model('User');

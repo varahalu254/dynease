@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, Check, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Search, Eye, EyeOff } from 'lucide-react';
 
 export default function StaffManagement() {
   const [staffList, setStaffList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -63,6 +64,7 @@ export default function StaffManagement() {
     setEditingId(null);
     setFormData({ name: '', email: '', password: '', role: 'RESTAURANT_STAFF', phone: '', isActive: true });
     setShowModal(true);
+    setShowPassword(false);
   };
 
   const openEditModal = (staff) => {
@@ -75,6 +77,7 @@ export default function StaffManagement() {
       phone: staff.phone || '',
       isActive: staff.isActive
     });
+    setShowPassword(false);
     setShowModal(true);
   };
 
@@ -238,7 +241,23 @@ export default function StaffManagement() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">{editingId ? 'New Password (leave blank to keep current)' : 'Password'}</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} required={!editingId} className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    name="password" 
+                    value={formData.password} 
+                    onChange={handleChange} 
+                    required={!editingId} 
+                    className="w-full p-2.5 pr-10 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <input type="checkbox" id="isActive" name="isActive" checked={formData.isActive} onChange={handleChange} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" />

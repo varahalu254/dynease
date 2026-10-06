@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Search, X, Send, CheckCircle, Loader } from 'lucide-react';
+import { Plus, Trash2, Edit, Search, X, Send, CheckCircle, Loader, Eye, EyeOff } from 'lucide-react';
 
 export default function RestaurantsManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -10,6 +10,7 @@ export default function RestaurantsManagement() {
   const [editingId, setEditingId] = useState(null);
   const [sendingCredentials, setSendingCredentials] = useState({});
   const [togglingStatus, setTogglingStatus] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -108,8 +109,9 @@ export default function RestaurantsManagement() {
     setEditingId(restaurant._id);
     setEditFormData({
       name: restaurant.name,
-      subscriptionPlan: restaurant.subscriptionPlan || 'FREE',
-      isActive: restaurant.isActive,
+      subdomain: restaurant.subdomain || restaurant.slug || '',
+      subscriptionPlan: restaurant.selectedPlan || restaurant.subscriptionPlan || 'FREE',
+      isActive: restaurant.status === 'ACTIVE' || restaurant.isActive === true,
       ownerName: restaurant.ownerId?.name || '',
       ownerEmail: restaurant.ownerId?.email || '',
       ownerPhone: restaurant.ownerId?.phone || ''
@@ -268,8 +270,8 @@ export default function RestaurantsManagement() {
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${res.subscriptionPlan === 'PRO' ? 'bg-purple-100 text-purple-700' : res.subscriptionPlan === 'GROWTH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {res.subscriptionPlan || 'FREE'}
+                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${res.selectedPlan === 'PRO' ? 'bg-purple-100 text-purple-700' : res.selectedPlan === 'GROWTH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {res.selectedPlan || 'FREE'}
                     </span>
                   </td>
                   <td className="p-4 text-right">
@@ -325,7 +327,24 @@ export default function RestaurantsManagement() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Temporary Password</label>
-                <input type="password" name="ownerPassword" value={formData.ownerPassword} onChange={handleChange} required className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" placeholder="••••••••" />
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    name="ownerPassword" 
+                    value={formData.ownerPassword} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-3 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" 
+                    placeholder="••••••••" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
               <div className="pt-4 flex gap-3">
@@ -353,9 +372,15 @@ export default function RestaurantsManagement() {
             </div>
             
             <form className="p-6 space-y-4" onSubmit={handleEditSubmit}>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Restaurant Name</label>
-                <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} required className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Restaurant Name</label>
+                  <input type="text" name="name" value={editFormData.name} onChange={handleEditChange} required className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Subdomain</label>
+                  <input type="text" name="subdomain" value={editFormData.subdomain} onChange={handleEditChange} required className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

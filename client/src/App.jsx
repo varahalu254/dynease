@@ -22,6 +22,7 @@ import Settings from './pages/admin/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import RestaurantLayout from './pages/restaurant/Layout';
 import MenuManagement from './pages/restaurant/MenuManagement';
+import CategoryManagement from './pages/restaurant/CategoryManagement';
 import About from './pages/About';
 import Pricing from './pages/Pricing';
 import RegisterRestaurant from './pages/RegisterRestaurant';
@@ -86,6 +87,7 @@ function App() {
             <Route path="/restaurant" element={<RestaurantLayout />}>
             <Route index element={<RestaurantDashboard />} />
               <Route path="menu" element={<MenuManagement />} />
+              <Route path="categories" element={<CategoryManagement />} />
               <Route path="tables" element={<TablesManagement />} />
               <Route path="staff" element={<StaffManagement />} />
             </Route>
@@ -160,6 +162,7 @@ function App() {
         <Route path="/restaurant" element={<RestaurantLayout />}>
           <Route index element={<RestaurantDashboard />} />
           <Route path="menu" element={<MenuManagement />} />
+          <Route path="categories" element={<CategoryManagement />} />
           <Route path="tables" element={<TablesManagement />} />
           <Route path="staff" element={<StaffManagement />} />
         </Route>

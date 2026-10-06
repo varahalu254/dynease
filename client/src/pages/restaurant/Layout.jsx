@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Utensils, Grid, LogOut, Users } from 'lucide-react';
+import { LayoutDashboard, Utensils, Grid, LogOut, Users, FolderOpen } from 'lucide-react';
 
 export default function RestaurantLayout() {
   const location = useLocation();
@@ -14,6 +14,7 @@ export default function RestaurantLayout() {
   const links = [
     { name: 'Dashboard', path: '/restaurant', icon: <LayoutDashboard size={20} /> },
     { name: 'Menu', path: '/restaurant/menu', icon: <Utensils size={20} /> },
+    { name: 'Categories', path: '/restaurant/categories', icon: <FolderOpen size={20} /> },
     { name: 'Tables & QR', path: '/restaurant/tables', icon: <Grid size={20} /> },
     { name: 'Staff', path: '/restaurant/staff', icon: <Users size={20} /> },
   ];

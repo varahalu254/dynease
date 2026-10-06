@@ -36,6 +36,16 @@ const menuItemSchema = new mongoose.Schema({
   preparationTime: {
     type: Number // in minutes
   },
+  quantities: [{
+    size: {
+      type: String,
+      required: true
+    },
+    price: {
+      type: Number,
+      required: true
+    }
+  }],
   addons: [{
     name: String,
     price: Number

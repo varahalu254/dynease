@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, X, Image as ImageIcon, Tag, Filter, ToggleLeft, ToggleRight, Loader2, FolderPlus } from 'lucide-react';
+import { Plus, Trash2, X, Image as ImageIcon, Tag, Filter, ToggleLeft, ToggleRight, Loader2 } from 'lucide-react';
 
 const DIET_TYPES = [
   { value: 'ALL', label: 'All Types', color: 'gray' },
@@ -22,14 +22,9 @@ export default function MenuManagement() {
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [activeDiet, setActiveDiet] = useState('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryDesc, setNewCategoryDesc] = useState('');
-  const [savingCategory, setSavingCategory] = useState(false);
-  const [deletingCatId, setDeletingCatId] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -39,6 +34,7 @@ export default function MenuManagement() {
     dietaryPreference: 'VEG',
     preparationTime: '15'
   });
+  const [quantities, setQuantities] = useState([]);
   const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
@@ -95,6 +91,9 @@ export default function MenuManagement() {
     data.append('price', formData.price);
     data.append('dietaryPreference', formData.dietaryPreference);
     data.append('preparationTime', formData.preparationTime);
+    if (quantities.length > 0) {
+      data.append('quantities', JSON.stringify(quantities));
+    }
     if (imageFile) data.append('image', imageFile);
 
     try {
@@ -107,6 +106,7 @@ export default function MenuManagement() {
       if (json.success) {
         setShowAddModal(false);
         setFormData({ name: '', category: '', description: '', price: '', dietaryPreference: 'VEG', preparationTime: '15' });
+        setQuantities([]);
         setImageFile(null);
         fetchMenu();
       } else {
@@ -155,52 +155,6 @@ export default function MenuManagement() {
     }
   };
 
-  const handleSaveCategory = async (e) => {
-    e.preventDefault();
-    if (!newCategoryName.trim()) return;
-    setSavingCategory(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/categories`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ name: newCategoryName.trim(), description: newCategoryDesc.trim() })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCategories(prev => [...prev, data.data.category]);
-        setNewCategoryName('');
-        setNewCategoryDesc('');
-      } else {
-        alert(data.message);
-      }
-    } catch (err) {
-      alert('Error saving category.');
-    } finally {
-      setSavingCategory(false);
-    }
-  };
-
-  const handleDeleteCategory = async (cat) => {
-    if (!window.confirm(`Delete category "${cat.name}"?`)) return;
-    setDeletingCatId(cat._id);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/categories/${cat._id}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      });
-      const data = await res.json();
-      if (data.success) {
-        setCategories(prev => prev.filter(c => c._id !== cat._id));
-      } else {
-        alert(data.message);
-      }
-    } catch (err) {
-      alert('Error deleting category.');
-    } finally {
-      setDeletingCatId(null);
-    }
-  };
-
   // Filtered items
   const filtered = items.filter(item => {
     const catMatch = activeCategory === 'ALL' || item.category === activeCategory;
@@ -215,20 +169,12 @@ export default function MenuManagement() {
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-wrap justify-between items-center gap-3">
         <h2 className="text-xl font-bold text-gray-800">Menu Management</h2>
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setShowCategoryModal(true)}
-            className="border border-orange-300 text-orange-600 hover:bg-orange-50 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
-          >
-            <FolderPlus size={16} /> Manage Categories
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
-          >
-            <Plus size={16} /> Add Dish
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors text-sm"
+        >
+          <Plus size={16} /> Add Dish
+        </button>
       </div>
 
       {/* Filters */}
@@ -338,9 +284,16 @@ export default function MenuManagement() {
                 </td>
                 <td className="p-4 font-bold text-orange-600">₹{item.price}</td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${DIET_BADGE[item.dietaryPreference] || DIET_BADGE.NONE}`}>
-                    {item.dietaryPreference}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${DIET_BADGE[item.dietaryPreference] || DIET_BADGE.NONE}`}>
+                      {item.dietaryPreference}
+                    </span>
+                    {item.quantities && item.quantities.length > 0 && (
+                      <div className="text-xs text-gray-500 font-medium">
+                        {item.quantities.length} variant{item.quantities.length !== 1 ? 's' : ''}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="p-4">
                   <button
@@ -401,7 +354,7 @@ export default function MenuManagement() {
                     </select>
                   ) : (
                     <div className="w-full p-2.5 border border-dashed border-orange-300 rounded-lg text-xs text-orange-500 bg-orange-50">
-                      No categories yet. <button type="button" onClick={() => { setShowAddModal(false); setShowCategoryModal(true); }} className="font-bold underline">Add one first.</button>
+                      No categories yet. Add one in the Categories tab.
                     </div>
                   )}
                 </div>
@@ -423,6 +376,66 @@ export default function MenuManagement() {
                 <label className="block text-sm font-semibold mb-1 text-gray-700">Photo (Optional)</label>
                 <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files[0])} className="w-full p-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
               </div>
+
+              {/* Quantity Variants */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="block text-sm font-semibold text-gray-700">Add Size/Quantity Variants (Optional)</label>
+                  <button
+                    type="button"
+                    onClick={() => setQuantities([...quantities, { size: '', price: '' }])}
+                    className="text-xs bg-orange-100 text-orange-600 hover:bg-orange-200 px-2 py-1 rounded transition-colors font-medium"
+                  >
+                    + Add Variant
+                  </button>
+                </div>
+                
+                {quantities.length > 0 && (
+                  <div className="space-y-2">
+                    {quantities.map((qty, idx) => (
+                      <div key={idx} className="flex gap-2 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-600 font-medium block mb-1">Size/Type</label>
+                          <input
+                            type="text"
+                            value={qty.size}
+                            onChange={(e) => {
+                              const newQty = [...quantities];
+                              newQty[idx].size = e.target.value;
+                              setQuantities(newQty);
+                            }}
+                            placeholder="e.g. Small, Medium, Large, 250ml"
+                            className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-orange-500"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-600 font-medium block mb-1">Price (₹)</label>
+                          <input
+                            type="number"
+                            value={qty.price}
+                            onChange={(e) => {
+                              const newQty = [...quantities];
+                              newQty[idx].price = e.target.value;
+                              setQuantities(newQty);
+                            }}
+                            placeholder="0"
+                            min="0"
+                            className="w-full p-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-orange-500"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setQuantities(quantities.filter((_, i) => i !== idx))}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="pt-2 flex gap-3">
                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition-colors text-sm">Cancel</button>
                 <button type="submit" disabled={isLoading} className="flex-1 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold disabled:opacity-50 transition-colors text-sm flex items-center justify-center gap-2">
@@ -434,69 +447,7 @@ export default function MenuManagement() {
         </div>
       )}
 
-      {/* ── Manage Categories Modal ── */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-lg text-gray-900">Manage Categories</h3>
-              <button onClick={() => setShowCategoryModal(false)} className="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-200 transition-colors"><X size={20} /></button>
-            </div>
-            <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-              {/* Add New */}
-              <form onSubmit={handleSaveCategory} className="space-y-3">
-                <h4 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Add New Category</h4>
-                <input
-                  type="text"
-                  value={newCategoryName}
-                  onChange={e => setNewCategoryName(e.target.value)}
-                  placeholder="Category name (e.g. Starters)"
-                  required
-                  className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white text-sm"
-                />
-                <input
-                  type="text"
-                  value={newCategoryDesc}
-                  onChange={e => setNewCategoryDesc(e.target.value)}
-                  placeholder="Description (optional)"
-                  className="w-full p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white text-sm"
-                />
-                <button type="submit" disabled={savingCategory} className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold disabled:opacity-50 transition-colors text-sm flex items-center justify-center gap-2">
-                  {savingCategory ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                  {savingCategory ? 'Saving…' : 'Add Category'}
-                </button>
-              </form>
 
-              {/* Existing Categories */}
-              <div>
-                <h4 className="font-bold text-gray-700 text-sm uppercase tracking-wide mb-3">Your Categories</h4>
-                {categories.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">No categories yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {categories.map(cat => (
-                      <div key={cat._id} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
-                        <div>
-                          <p className="font-semibold text-gray-800 text-sm">{cat.name}</p>
-                          {cat.description && <p className="text-xs text-gray-400">{cat.description}</p>}
-                          <p className="text-xs text-gray-400">{items.filter(i => i.category === cat.name).length} items</p>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteCategory(cat)}
-                          disabled={deletingCatId === cat._id}
-                          className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          {deletingCatId === cat._id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

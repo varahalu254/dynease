@@ -17,6 +17,7 @@ router.delete('/categories/:id', restaurantController.deleteCategory);
 
 // ── Menu item routes ──
 router.post('/menu', upload.single('image'), restaurantController.createMenuItem);
+router.put('/menu/:id', upload.single('image'), restaurantController.updateMenuItem);
 router.get('/menu', restaurantController.getMenu);
 router.delete('/menu/:id', restaurantController.deleteMenuItem);
 router.patch('/menu/:id/status', restaurantController.toggleMenuItemStatus);

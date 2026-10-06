@@ -95,7 +95,7 @@ exports.deleteCategory = async (req, res) => {
 exports.createMenuItem = async (req, res) => {
   try {
     const restaurantId = req.user.restaurantId;
-    const { category, name, description, price, isAvailable, dietaryPreference, preparationTime } = req.body;
+    const { category, name, description, price, isAvailable, dietaryPreference, preparationTime, quantities } = req.body;
 
     let image = null;
     if (req.file) {
@@ -110,6 +110,18 @@ exports.createMenuItem = async (req, res) => {
       }
     }
 
+    // Parse quantities if it's a string
+    let parsedQuantities = [];
+    if (quantities) {
+      try {
+        parsedQuantities = typeof quantities === 'string' ? JSON.parse(quantities) : quantities;
+        // Filter out invalid entries
+        parsedQuantities = parsedQuantities.filter(q => q.size && q.price);
+      } catch (parseError) {
+        console.error("Error parsing quantities:", parseError);
+      }
+    }
+
     const MenuItem = req.tenantDb.model('MenuItem');
     const menuItem = await MenuItem.create({
       restaurantId,
@@ -120,10 +132,73 @@ exports.createMenuItem = async (req, res) => {
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       dietaryPreference,
       preparationTime,
-      image
+      image,
+      quantities: parsedQuantities
     });
 
     res.status(201).json({ success: true, data: { menuItem } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.updateMenuItem = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { id } = req.params;
+    const { category, name, description, price, isAvailable, dietaryPreference, preparationTime, quantities } = req.body;
+
+    let image = null;
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, `dynease/menu/${restaurantId}`);
+        image = {
+          public_id: uploadResult.public_id,
+          secure_url: uploadResult.secure_url
+        };
+      } catch (uploadError) {
+        console.error("Cloudinary Upload Error:", uploadError);
+      }
+    }
+
+    // Parse quantities if it's a string
+    let parsedQuantities = [];
+    if (quantities) {
+      try {
+        parsedQuantities = typeof quantities === 'string' ? JSON.parse(quantities) : quantities;
+        // Filter out invalid entries
+        parsedQuantities = parsedQuantities.filter(q => q.size && q.price);
+      } catch (parseError) {
+        console.error("Error parsing quantities:", parseError);
+      }
+    }
+
+    const MenuItem = req.tenantDb.model('MenuItem');
+    const updateData = {
+      category,
+      name,
+      description,
+      price,
+      isAvailable,
+      dietaryPreference,
+      preparationTime,
+      quantities: parsedQuantities
+    };
+
+    if (image) updateData.image = image;
+
+    const menuItem = await MenuItem.findOneAndUpdate(
+      { _id: id, restaurantId },
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!menuItem) {
+      return res.status(404).json({ success: false, message: 'Menu item not found.' });
+    }
+
+    res.status(200).json({ success: true, data: { menuItem } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server Error' });

@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingBag, Loader2, ChevronRight, Plus, Minus, X } from 'lucide-react';
+import { Search, ShoppingBag, Loader2, Plus, Minus, X, Menu as MenuIcon, ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useRestaurant, getTenantHeaders } from '../../context/RestaurantContext';
+import CustomerSidebar from '../../components/customer/CustomerSidebar';
 
 export default function HomePage({ forcedSlug }) {
   const { slug: paramSlug } = useParams();
   const activeSlug = forcedSlug || paramSlug;
-  const { session, addToCart, removeFromCart, updateQuantity, cart, cartCount, cartSubtotal } = useRestaurant();
+  const { session, addToCart, removeFromCart, updateQuantity, cart, cartCount } = useRestaurant();
   
   const [restaurant, setRestaurant] = useState(session?.restaurant || null);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [search, setSearch] = useState('');
+  const [activeDiet, setActiveDiet] = useState('ALL');
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const categoryRefs = useRef({});
@@ -84,10 +88,11 @@ export default function HomePage({ forcedSlug }) {
 
   const filteredCategories = categories.map(cat => ({
     ...cat,
-    items: cat.items.filter(item =>
-      !search || item.name.toLowerCase().includes(search.toLowerCase()) ||
-      (item.description || '').toLowerCase().includes(search.toLowerCase())
-    )
+    items: cat.items.filter(item => {
+      const matchesSearch = !search || item.name.toLowerCase().includes(search.toLowerCase()) || (item.description || '').toLowerCase().includes(search.toLowerCase());
+      const matchesDiet = activeDiet === 'ALL' || item.dietaryPreference === activeDiet;
+      return matchesSearch && matchesDiet;
+    })
   })).filter(cat => cat.items.length > 0);
 
   const scrollToCategory = (name) => {
@@ -123,83 +128,117 @@ export default function HomePage({ forcedSlug }) {
   return (
     <div className="min-h-screen bg-gray-50 max-w-md mx-auto relative shadow-2xl pb-28">
       {/* ── Header ── */}
-      <header className="bg-white px-4 pt-4 pb-3 sticky top-0 z-20 shadow-sm">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h1 className="text-2xl font-extrabold text-gray-900 leading-tight">
-              {restaurant?.name || 'Menu'}
-            </h1>
-            {tableLabel && (
-              <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">
-                {tableLabel}
-              </span>
+      <header className="bg-white px-4 pt-4 pb-3 sticky top-0 z-20 shadow-sm border-b border-gray-100">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            {selectedCategory ? (
+              <button onClick={() => setSelectedCategory(null)} className="p-1 -ml-1 hover:bg-gray-100 rounded-lg transition-colors">
+                <ArrowLeft size={24} className="text-gray-700" />
+              </button>
+            ) : (
+              <button onClick={() => setIsSidebarOpen(true)} className="p-1 -ml-1 hover:bg-gray-100 rounded-lg transition-colors">
+                <MenuIcon size={24} className="text-gray-700" />
+              </button>
             )}
+            <div>
+              <h1 className="text-xl font-medium text-gray-800 leading-tight">
+                {selectedCategory || restaurant?.name || 'Menu'}
+              </h1>
+              {tableLabel && !selectedCategory && (
+                <span className="text-[10px] bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full mt-1 inline-block">
+                  {tableLabel}
+                </span>
+              )}
+            </div>
           </div>
-          <Link to="/cart" className="relative p-2 bg-orange-50 rounded-xl border border-orange-100">
-            <ShoppingBag size={24} className="text-orange-600" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-orange-600 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                {cartCount}
-              </span>
-            )}
-          </Link>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search dishes…"
-            className="w-full bg-gray-100 pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all"
-          />
-          {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <X size={16} />
-            </button>
-          )}
         </div>
       </header>
 
-      {/* ── Category Pills ── */}
-      {!search && (
-        <div className="bg-white px-4 pt-2 pb-3 overflow-x-auto flex gap-2 scrollbar-hide sticky top-[100px] z-10 shadow-sm">
-          {categories.map(cat => (
-            <button
-              key={cat.name}
-              onClick={() => scrollToCategory(cat.name)}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors flex-shrink-0 ${
-                activeCategory === cat.name
-                  ? 'bg-orange-600 text-white shadow-md shadow-orange-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Menu Items ── */}
-      <div className="px-4 pt-4 space-y-6">
-        {filteredCategories.length === 0 && (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-lg font-medium">No items found</p>
-            <p className="text-sm">Try a different search</p>
+      {!selectedCategory ? (
+        <div className="bg-gray-50 pb-6">
+          {/* Ads Banner Placeholder */}
+          <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide border-b border-gray-200 bg-white">
+            <div className="min-w-full snap-center bg-gradient-to-r from-orange-100 to-yellow-100 aspect-[21/9] flex flex-col justify-center items-center text-orange-800 p-4 text-center">
+              <h2 className="font-extrabold text-2xl mb-1 text-orange-600">Special Offer!</h2>
+              <p className="font-medium text-sm">Get 20% off on all starters today.</p>
+            </div>
           </div>
-        )}
-        {filteredCategories.map(cat => (
-          <section
-            key={cat.name}
-            ref={el => { categoryRefs.current[cat.name] = el; }}
-          >
-            <h2 className="text-base font-extrabold text-gray-800 mb-3 uppercase tracking-wide">{cat.name}</h2>
-            <div className="space-y-3">
-              {cat.items.map(item => {
+
+          {/* Categories Grid */}
+          <div className="p-4 grid grid-cols-2 gap-4 mt-2">
+            {categories.map(cat => {
+              const catImage = cat.image || cat.items.find(i => i.imageUrl)?.imageUrl;
+              return (
+                <div 
+                  key={cat.name} 
+                  onClick={() => setSelectedCategory(cat.name)}
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform"
+                >
+                  <div className="w-full aspect-square bg-gray-50 rounded-lg mb-3 overflow-hidden">
+                    {catImage ? (
+                      <img src={catImage} alt={cat.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <span className="font-bold text-4xl opacity-50">{cat.name[0]}</span>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-gray-800 text-sm leading-tight mb-2 pb-1">{cat.name}</h3>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gray-50 pb-6">
+          {/* Search & Filters */}
+          <div className="bg-white px-4 py-3 sticky top-[60px] z-10 shadow-sm border-b border-gray-100 space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search dishes..."
+                className="w-full bg-gray-100 pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all"
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {[
+                { value: 'ALL', label: 'All Types' },
+                { value: 'VEG', label: '🟢 Veg' },
+                { value: 'NON_VEG', label: '🔴 Non-Veg' },
+                { value: 'VEGAN', label: '🌿 Vegan' }
+              ].map(type => (
+                <button
+                  key={type.value}
+                  onClick={() => setActiveDiet(type.value)}
+                  className={`whitespace-nowrap px-3 py-1 rounded-md text-xs font-bold transition-colors flex-shrink-0 border ${
+                    activeDiet === type.value
+                      ? 'bg-gray-800 text-white border-gray-800'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Items List */}
+          <div className="px-4 pt-4 space-y-3">
+            {filteredCategories
+              .filter(cat => cat.name === selectedCategory)
+              .map(cat => cat.items.map(item => {
                 const qty = getItemQty(item.id);
                 return (
                   <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm flex gap-3 p-3 items-start">
-                    {/* Image */}
                     <div className="relative shrink-0">
                       <img
                         src={item.imageUrl || `https://placehold.co/96x96/f97316/white?text=${encodeURIComponent(item.name[0])}`}
@@ -207,7 +246,6 @@ export default function HomePage({ forcedSlug }) {
                         className="w-24 h-24 object-cover rounded-xl"
                       />
                     </div>
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <span className={`w-3 h-3 rounded-sm border-2 flex-shrink-0 ${
@@ -221,7 +259,6 @@ export default function HomePage({ forcedSlug }) {
                       {item.description && (
                         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{item.description}</p>
                       )}
-                      {/* Cart Controls */}
                       <div className="mt-2 flex justify-end">
                         {qty === 0 ? (
                           <button
@@ -251,32 +288,42 @@ export default function HomePage({ forcedSlug }) {
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
-
-      {/* ── Floating Cart Bar ── */}
-      {cartCount > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
-          <Link
-            to="/cart"
-            className="flex justify-between items-center bg-orange-600 text-white px-5 py-3.5 rounded-2xl shadow-xl shadow-orange-300/50 hover:bg-orange-700 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <span className="bg-orange-800/40 text-white text-xs font-bold w-6 h-6 rounded-lg flex items-center justify-center">
-                {cartCount}
-              </span>
-              <span className="font-bold">View Cart</span>
-            </div>
-            <div className="flex items-center gap-2 font-bold">
-              ₹{cartSubtotal.toFixed(2)}
-              <ChevronRight size={18} />
-            </div>
-          </Link>
+            }))}
+            
+            {filteredCategories.filter(cat => cat.name === selectedCategory).length === 0 && (
+              <div className="text-center py-12 text-gray-400">
+                <p className="text-lg font-medium">No items found</p>
+                <p className="text-sm">Try a different search</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
+
+      {/* ── Floating Cart Button ── */}
+      <div className="fixed bottom-5 left-0 right-0 z-50 pointer-events-none px-4 flex justify-end">
+        <div className="w-full max-w-md mx-auto flex justify-end">
+          <Link
+            to="/cart"
+            aria-label="View cart"
+            className="pointer-events-auto relative p-4 bg-orange-600 rounded-full shadow-xl shadow-orange-600/30 hover:bg-orange-700 transition-colors flex items-center justify-center"
+          >
+            <ShoppingBag size={24} className="text-white" />
+            {cartCount > 0 && (
+              <span className="absolute 0 top-0 right-0 -mt-1 -mr-1 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold border-2 border-white">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+        </div>
+      </div>
+
+      <CustomerSidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        tableLabel={tableLabel} 
+      />
+
     </div>
   );
 }

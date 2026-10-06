@@ -11,8 +11,8 @@ router.use(restrictTo('RESTAURANT_OWNER', 'RESTAURANT_STAFF'));
 
 // ── Category routes ──
 router.get('/categories', restaurantController.getCategories);
-router.post('/categories', restaurantController.createCategory);
-router.put('/categories/:id', restaurantController.updateCategory);
+router.post('/categories', upload.single('image'), restaurantController.createCategory);
+router.put('/categories/:id', upload.single('image'), restaurantController.updateCategory);
 router.delete('/categories/:id', restaurantController.deleteCategory);
 
 // ── Menu item routes ──

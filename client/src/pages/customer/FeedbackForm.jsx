@@ -1,26 +1,47 @@
 import React, { useState } from 'react';
-import { Star, CheckCircle } from 'lucide-react';
+import { Star, CheckCircle, ArrowLeft, Menu as MenuIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useRestaurant } from '../../context/RestaurantContext';
+import CustomerSidebar from '../../components/customer/CustomerSidebar';
 
 export default function FeedbackForm() {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  const navigate = useNavigate();
+  const { session } = useRestaurant();
+  const restaurantName = session?.restaurant?.name || 'Restaurant';
+  const tableLabel = session?.table?.tableNumber ? `Table ${session.table.tableNumber}` : null;
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 max-w-md mx-auto">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 max-w-md mx-auto shadow-2xl relative">
         <CheckCircle size={64} className="text-green-500 mb-6" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
-        <p className="text-gray-600 text-center">Your feedback helps us improve our service.</p>
+        <p className="text-gray-600 text-center mb-8">Your feedback helps us improve our service.</p>
+        <button onClick={() => navigate(-1)} className="text-orange-600 font-bold hover:underline flex items-center gap-2">
+          <ArrowLeft size={16} /> Back to Menu
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col p-6 max-w-md mx-auto">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mt-10">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Rate your experience</h2>
-        <p className="text-gray-500 mb-8">How was your food at Paradise Biryani?</p>
+    <div className="min-h-screen bg-gray-50 max-w-md mx-auto shadow-2xl relative">
+      {/* ── Header ── */}
+      <header className="bg-white px-4 py-4 sticky top-0 z-20 shadow-sm flex items-center border-b border-gray-100 gap-3">
+        <button onClick={() => setIsSidebarOpen(true)} className="p-1 -ml-1 hover:bg-gray-100 rounded-lg transition-colors">
+          <MenuIcon size={24} className="text-gray-700" />
+        </button>
+        <h1 className="text-xl font-extrabold text-gray-900">Feedback</h1>
+      </header>
+
+      <div className="p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mt-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Rate your experience</h2>
+          <p className="text-gray-500 mb-8">How was your food at {restaurantName}?</p>
 
         <div className="flex justify-center gap-2 mb-8">
           {[...Array(5)].map((_, index) => {
@@ -53,6 +74,13 @@ export default function FeedbackForm() {
           Submit Feedback
         </button>
       </div>
+      </div>
+
+      <CustomerSidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        tableLabel={tableLabel} 
+      />
     </div>
   );
 }

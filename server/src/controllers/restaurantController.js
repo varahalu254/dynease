@@ -8,7 +8,7 @@ exports.getCategories = async (req, res) => {
   try {
     const restaurantId = req.user.restaurantId;
     const Category = req.tenantDb.model('Category');
-    const categories = await Category.find({ restaurantId, isActive: true }).sort({ displayOrder: 1, name: 1 });
+    const categories = await Category.find({ restaurantId }).sort({ displayOrder: 1, name: 1 });
     res.status(200).json({ success: true, data: { categories } });
   } catch (error) {
     console.error(error);
@@ -28,11 +28,26 @@ exports.createCategory = async (req, res) => {
     if (existing) {
       return res.status(409).json({ success: false, message: 'A category with this name already exists.' });
     }
+
+    let image = null;
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, `dynease/categories/${restaurantId}`);
+        image = {
+          public_id: uploadResult.public_id,
+          secure_url: uploadResult.secure_url
+        };
+      } catch (uploadError) {
+        console.error("Cloudinary Upload Error:", uploadError);
+      }
+    }
+
     const category = await Category.create({
       restaurantId,
       name: name.trim(),
       description: description?.trim() || '',
-      displayOrder: displayOrder || 0
+      displayOrder: displayOrder || 0,
+      image
     });
     res.status(201).json({ success: true, data: { category } });
   } catch (error) {
@@ -46,10 +61,25 @@ exports.updateCategory = async (req, res) => {
     const restaurantId = req.user.restaurantId;
     const { id } = req.params;
     const { name, description, displayOrder, isActive } = req.body;
+    
+    let updateData = { name: name?.trim(), description: description?.trim(), displayOrder, isActive };
+
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, `dynease/categories/${restaurantId}`);
+        updateData.image = {
+          public_id: uploadResult.public_id,
+          secure_url: uploadResult.secure_url
+        };
+      } catch (uploadError) {
+        console.error("Cloudinary Upload Error:", uploadError);
+      }
+    }
+
     const Category = req.tenantDb.model('Category');
     const category = await Category.findOneAndUpdate(
       { _id: id, restaurantId },
-      { name: name?.trim(), description: description?.trim(), displayOrder, isActive },
+      updateData,
       { new: true, runValidators: true }
     );
     if (!category) {

@@ -86,13 +86,24 @@ exports.getMenu = async (req, res, next) => {
     const MenuItem = tenantDb.model('MenuItem');
     const menuItems = await MenuItem.find({ isAvailable: true }).sort({ category: 1, name: 1 });
     
-    // Group by category
-    const categoryMap = {};
+    const Category = tenantDb.model('Category');
+    const categoryDocs = await Category.find({ isActive: true }).sort({ displayOrder: 1, name: 1 });
+    
+    // Create base categories list
+    const categories = categoryDocs.map(c => ({
+      name: c.name,
+      image: c.image?.secure_url || null,
+      items: []
+    }));
+    
+    // Add items to categories, also handle items that might not have a category document
     for (const item of menuItems) {
-      if (!categoryMap[item.category]) {
-        categoryMap[item.category] = [];
+      let targetCat = categories.find(c => c.name === item.category);
+      if (!targetCat) {
+        targetCat = { name: item.category, items: [] };
+        categories.push(targetCat);
       }
-      categoryMap[item.category].push({
+      targetCat.items.push({
         id: item._id,
         name: item.name,
         description: item.description,
@@ -103,8 +114,6 @@ exports.getMenu = async (req, res, next) => {
         preparationTime: item.preparationTime
       });
     }
-
-    const categories = Object.entries(categoryMap).map(([name, items]) => ({ name, items }));
 
     res.status(200).json({
       success: true,
@@ -152,12 +161,49 @@ exports.getRestaurantMenu = async (req, res, next) => {
     }
 
     const MenuItem = tenantDb.model('MenuItem');
-    const menuItems = await MenuItem.find({ isAvailable: true });
-    const categories = [...new Set(menuItems.map(item => item.category))];
+    const menuItems = await MenuItem.find({ isAvailable: true }).sort({ category: 1, name: 1 });
+    
+    const Category = tenantDb.model('Category');
+    const categoryDocs = await Category.find({ isActive: true }).sort({ displayOrder: 1, name: 1 });
+    
+    // Create base categories list
+    const categories = categoryDocs.map(c => ({
+      name: c.name,
+      image: c.image?.secure_url || null,
+      items: []
+    }));
+    
+    // Add items to categories, also handle items that might not have a category document
+    for (const item of menuItems) {
+      let targetCat = categories.find(c => c.name === item.category);
+      if (!targetCat) {
+        targetCat = { name: item.category, items: [] };
+        categories.push(targetCat);
+      }
+      targetCat.items.push({
+        id: item._id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        imageUrl: item.image?.secure_url || null,
+        isAvailable: item.isAvailable,
+        dietaryPreference: item.dietaryPreference,
+        preparationTime: item.preparationTime
+      });
+    }
 
     res.status(200).json({
       success: true,
-      data: { restaurant: profile, menuItems, categories }
+      data: {
+        restaurant: {
+          id: registry.restaurantId,
+          name: profile.name,
+          slug: registry.subdomain,
+          logo: profile.logo?.secure_url || null,
+          taxPercent: profile.taxInfo?.taxPercentage || 0
+        },
+        categories
+      }
     });
   } catch (error) {
     next(error);

@@ -1,8 +1,100 @@
 const { uploadToCloudinary } = require('../utils/cloudinary');
 
+// ──────────────────────────────────────────
+//  CATEGORY CRUD
+// ──────────────────────────────────────────
+
+exports.getCategories = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const Category = req.tenantDb.model('Category');
+    const categories = await Category.find({ restaurantId, isActive: true }).sort({ displayOrder: 1, name: 1 });
+    res.status(200).json({ success: true, data: { categories } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.createCategory = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { name, description, displayOrder } = req.body;
+    if (!name?.trim()) {
+      return res.status(400).json({ success: false, message: 'Category name is required.' });
+    }
+    const Category = req.tenantDb.model('Category');
+    const existing = await Category.findOne({ restaurantId, name: name.trim() });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'A category with this name already exists.' });
+    }
+    const category = await Category.create({
+      restaurantId,
+      name: name.trim(),
+      description: description?.trim() || '',
+      displayOrder: displayOrder || 0
+    });
+    res.status(201).json({ success: true, data: { category } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.updateCategory = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { id } = req.params;
+    const { name, description, displayOrder, isActive } = req.body;
+    const Category = req.tenantDb.model('Category');
+    const category = await Category.findOneAndUpdate(
+      { _id: id, restaurantId },
+      { name: name?.trim(), description: description?.trim(), displayOrder, isActive },
+      { new: true, runValidators: true }
+    );
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found.' });
+    }
+    res.status(200).json({ success: true, data: { category } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.deleteCategory = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { id } = req.params;
+    const Category = req.tenantDb.model('Category');
+    // Check if any menu items use this category
+    const MenuItem = req.tenantDb.model('MenuItem');
+    const category = await Category.findOne({ _id: id, restaurantId });
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found.' });
+    }
+    const itemCount = await MenuItem.countDocuments({ restaurantId, category: category.name });
+    if (itemCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete: ${itemCount} menu item(s) use this category. Reassign them first.`
+      });
+    }
+    await Category.deleteOne({ _id: id, restaurantId });
+    res.status(200).json({ success: true, message: 'Category deleted.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// ──────────────────────────────────────────
+//  MENU ITEM CRUD
+// ──────────────────────────────────────────
+
 exports.createMenuItem = async (req, res) => {
   try {
-    const restaurantId = req.user.restaurantId; 
+    const restaurantId = req.user.restaurantId;
     const { category, name, description, price, isAvailable, dietaryPreference, preparationTime } = req.body;
 
     let image = null;
@@ -15,7 +107,6 @@ exports.createMenuItem = async (req, res) => {
         };
       } catch (uploadError) {
         console.error("Cloudinary Upload Error:", uploadError);
-        // Continue saving item even if image fails to upload
       }
     }
 
@@ -26,7 +117,7 @@ exports.createMenuItem = async (req, res) => {
       name,
       description,
       price,
-      isAvailable,
+      isAvailable: isAvailable !== undefined ? isAvailable : true,
       dietaryPreference,
       preparationTime,
       image
@@ -43,8 +134,47 @@ exports.getMenu = async (req, res) => {
   try {
     const restaurantId = req.user.restaurantId;
     const MenuItem = req.tenantDb.model('MenuItem');
-    const menuItems = await MenuItem.find({ restaurantId }).sort('-createdAt');
+    const { category, type } = req.query;
+
+    const filter = { restaurantId };
+    if (category) filter.category = category;
+    if (type) filter.dietaryPreference = type;
+
+    const menuItems = await MenuItem.find(filter).sort({ category: 1, name: 1 });
     res.status(200).json({ success: true, data: { menuItems } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.deleteMenuItem = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { id } = req.params;
+    const MenuItem = req.tenantDb.model('MenuItem');
+    const item = await MenuItem.findOneAndDelete({ _id: id, restaurantId });
+    if (!item) return res.status(404).json({ success: false, message: 'Item not found.' });
+    res.status(200).json({ success: true, message: 'Menu item deleted.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.toggleMenuItemStatus = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { id } = req.params;
+    const { isAvailable } = req.body;
+    const MenuItem = req.tenantDb.model('MenuItem');
+    const item = await MenuItem.findOneAndUpdate(
+      { _id: id, restaurantId },
+      { isAvailable },
+      { new: true }
+    );
+    if (!item) return res.status(404).json({ success: false, message: 'Item not found.' });
+    res.status(200).json({ success: true, data: { menuItem: item } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server Error' });

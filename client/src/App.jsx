@@ -4,6 +4,8 @@ import Index from './pages/Index';
 import HomePage from './pages/customer/HomePage';
 import ItemDescription from './pages/customer/ItemDescription';
 import Cart from './pages/customer/Cart';
+import Checkout from './pages/customer/Checkout';
+import OrderConfirmation from './pages/customer/OrderConfirmation';
 import FeedbackForm from './pages/customer/FeedbackForm';
 import QRMenuLoader from './pages/customer/QRMenuLoader';
 import Login from './pages/Login';
@@ -71,11 +73,14 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage forcedSlug={subdomain} />} />
-            <Route path="/t/:tableId" element={<HomePage forcedSlug={subdomain} />} />
+            {/* QR Entry - resolves token and sets session */}
+            <Route path="/t/:qrToken" element={<QRMenuLoader />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<RegisterRestaurant />} />
             <Route path="/item/:id" element={<ItemDescription />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order/:orderId" element={<OrderConfirmation />} />
             <Route path="/feedback" element={<FeedbackForm />} />
             <Route path="/admin" element={<Navigate to="/restaurant" replace />} />
             <Route path="/restaurant" element={<RestaurantLayout />}>
@@ -142,7 +147,10 @@ function App() {
         <Route path="/r/:slug" element={<HomePage />} />
         <Route path="/item/:id" element={<ItemDescription />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/order/:orderId" element={<OrderConfirmation />} />
         <Route path="/feedback" element={<FeedbackForm />} />
+        <Route path="/t/:qrToken" element={<QRMenuLoader />} />
         <Route path="/menu/:qrToken" element={<QRMenuLoader />} />
         
         {/* Kitchen Routes */}

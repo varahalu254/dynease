@@ -1,48 +1,64 @@
 const RestaurantRegistry = require('../models/platform/RestaurantRegistry');
 const TenantDatabaseManager = require('../services/TenantDatabaseManager');
 
-const getTenantDb = async (req, slug = null) => {
-  if (req.tenantDb) return { tenantDb: req.tenantDb, registry: req.tenantRegistry };
-  
-  if (slug) {
-    const registry = await RestaurantRegistry.findOne({ slug, status: 'ACTIVE' });
-    if (!registry) return null;
-    const tenantDb = await TenantDatabaseManager.getConnection(registry.databaseName);
-    return { tenantDb, registry };
+// Helper: get tenant DB from req (already resolved by tenantResolver middleware)
+const requireTenantDb = (req, res) => {
+  if (!req.tenantDb || !req.tenantRegistry) {
+    res.status(404).json({ success: false, message: 'Restaurant not found or not active.' });
+    return null;
   }
-  return null;
+  return { tenantDb: req.tenantDb, registry: req.tenantRegistry };
 };
 
+/**
+ * GET /api/public/qr/:token
+ * Resolves a QR token → restaurant + table info
+ */
 exports.getTableByQR = async (req, res, next) => {
   try {
     const { qrToken } = req.params;
     
-    // For QR codes, the customer is definitely on the correct subdomain, so req.tenantDb is usually present.
-    // However, if they aren't, we can't easily resolve the DB from just the QR token unless we query all DBs, 
-    // which is not scalable. We rely on the subdomain mapping.
-    
-    if (!req.tenantDb) {
-       return res.status(404).json({ success: false, message: 'Invalid restaurant domain for this QR code.' });
-    }
+    const info = requireTenantDb(req, res);
+    if (!info) return;
+    const { tenantDb, registry } = info;
 
-    const Table = req.tenantDb.model('Table');
+    const Table = tenantDb.model('Table');
     const table = await Table.findOne({ qrToken, status: 'ACTIVE' });
     if (!table) {
-      return res.status(404).json({ success: false, message: 'Invalid or inactive QR code.' });
+      return res.status(404).json({ 
+        success: false, 
+        code: 'INVALID_QR',
+        message: 'This table QR code is invalid or inactive.' 
+      });
     }
 
-    const RestaurantProfile = req.tenantDb.model('RestaurantProfile');
-    const restaurant = await RestaurantProfile.findOne({ restaurantId: req.tenantRegistry.restaurantId });
+    const RestaurantProfile = tenantDb.model('RestaurantProfile');
+    const profile = await RestaurantProfile.findOne({ restaurantId: registry.restaurantId });
     
-    if (!restaurant || !restaurant.isActive) {
-      return res.status(403).json({ success: false, message: 'Restaurant is currently unavailable.' });
+    if (!profile || !profile.isActive) {
+      return res.status(403).json({ 
+        success: false, 
+        code: 'RESTAURANT_UNAVAILABLE',
+        message: 'This restaurant is currently unavailable.' 
+      });
     }
 
     res.status(200).json({ 
       success: true, 
       data: { 
-        table: { _id: table._id, tableNumber: table.tableNumber, tableName: table.tableName },
-        restaurant 
+        restaurant: { 
+          id: registry.restaurantId,
+          name: profile.name,
+          slug: registry.subdomain,
+          logo: profile.logo?.secure_url || null,
+          taxPercent: profile.taxInfo?.taxPercentage || 0
+        },
+        table: { 
+          id: table._id, 
+          tableNumber: table.tableNumber, 
+          tableName: table.tableName || null
+        },
+        session: { qrToken }
       } 
     });
   } catch (error) {
@@ -50,38 +66,234 @@ exports.getTableByQR = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/public/menu
+ * Returns the restaurant menu grouped by category
+ */
+exports.getMenu = async (req, res, next) => {
+  try {
+    const info = requireTenantDb(req, res);
+    if (!info) return;
+    const { tenantDb, registry } = info;
+
+    const RestaurantProfile = tenantDb.model('RestaurantProfile');
+    const profile = await RestaurantProfile.findOne({ restaurantId: registry.restaurantId });
+    
+    if (!profile || !profile.isActive) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found or inactive.' });
+    }
+
+    const MenuItem = tenantDb.model('MenuItem');
+    const menuItems = await MenuItem.find({ isAvailable: true }).sort({ category: 1, name: 1 });
+    
+    // Group by category
+    const categoryMap = {};
+    for (const item of menuItems) {
+      if (!categoryMap[item.category]) {
+        categoryMap[item.category] = [];
+      }
+      categoryMap[item.category].push({
+        id: item._id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        imageUrl: item.image?.secure_url || null,
+        isAvailable: item.isAvailable,
+        dietaryPreference: item.dietaryPreference,
+        preparationTime: item.preparationTime
+      });
+    }
+
+    const categories = Object.entries(categoryMap).map(([name, items]) => ({ name, items }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        restaurant: {
+          id: registry.restaurantId,
+          name: profile.name,
+          slug: registry.subdomain,
+          logo: profile.logo?.secure_url || null,
+          taxPercent: profile.taxInfo?.taxPercentage || 0
+        },
+        categories
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/public/restaurant/:slug/menu
+ * Legacy endpoint - returns same menu data by slug
+ */
 exports.getRestaurantMenu = async (req, res, next) => {
   try {
     const { slug } = req.params;
     
-    const dbInfo = await getTenantDb(req, slug);
-    if (!dbInfo) {
-      return res.status(404).json({ success: false, message: 'Restaurant not found or inactive.' });
+    let tenantDb = req.tenantDb;
+    let registry = req.tenantRegistry;
+
+    // If not resolved via subdomain, try resolving via slug
+    if (!tenantDb) {
+      registry = await RestaurantRegistry.findOne({ subdomain: slug, status: 'ACTIVE' });
+      if (!registry) {
+        return res.status(404).json({ success: false, message: 'Restaurant not found or inactive.' });
+      }
+      tenantDb = await TenantDatabaseManager.getConnection(registry.databaseName);
     }
-    
-    const { tenantDb, registry } = dbInfo;
 
     const RestaurantProfile = tenantDb.model('RestaurantProfile');
-    const restaurant = await RestaurantProfile.findOne({ restaurantId: registry.restaurantId });
+    const profile = await RestaurantProfile.findOne({ restaurantId: registry.restaurantId });
     
-    if (!restaurant || !restaurant.isActive) {
+    if (!profile || !profile.isActive) {
       return res.status(404).json({ success: false, message: 'Restaurant not found or inactive.' });
     }
 
     const MenuItem = tenantDb.model('MenuItem');
     const menuItems = await MenuItem.find({ isAvailable: true });
-    
-    // Extract unique categories
     const categories = [...new Set(menuItems.map(item => item.category))];
 
     res.status(200).json({
       success: true,
+      data: { restaurant: profile, menuItems, categories }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/public/orders
+ * Create a customer order - NEVER trusts frontend prices
+ */
+exports.createOrder = async (req, res, next) => {
+  try {
+    const info = requireTenantDb(req, res);
+    if (!info) return;
+    const { tenantDb, registry } = info;
+
+    const { tableId, customerName, customerPhone, items } = req.body;
+
+    // --- Validation ---
+    if (!tableId) {
+      return res.status(400).json({ success: false, message: 'Table is required.' });
+    }
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Order must have at least one item.' });
+    }
+    for (const item of items) {
+      if (!item.menuItemId || !item.quantity || item.quantity < 1) {
+        return res.status(400).json({ success: false, message: 'Each item must have a valid menuItemId and quantity >= 1.' });
+      }
+    }
+
+    // --- Validate table ---
+    const Table = tenantDb.model('Table');
+    const table = await Table.findById(tableId);
+    if (!table || table.status !== 'ACTIVE') {
+      return res.status(400).json({ success: false, message: 'Invalid or inactive table.' });
+    }
+
+    // --- Validate menu items and compute prices server-side ---
+    const MenuItem = tenantDb.model('MenuItem');
+    const orderItems = [];
+    let subtotal = 0;
+
+    for (const reqItem of items) {
+      const menuItem = await MenuItem.findById(reqItem.menuItemId);
+      if (!menuItem) {
+        return res.status(400).json({ success: false, message: `Menu item not found: ${reqItem.menuItemId}` });
+      }
+      if (!menuItem.isAvailable) {
+        return res.status(400).json({ success: false, message: `Item is currently unavailable: ${menuItem.name}` });
+      }
+      const qty = parseInt(reqItem.quantity, 10);
+      if (isNaN(qty) || qty < 1 || qty > 50) {
+        return res.status(400).json({ success: false, message: `Invalid quantity for ${menuItem.name}` });
+      }
+      const lineSubtotal = parseFloat((menuItem.price * qty).toFixed(2));
+      subtotal += lineSubtotal;
+      orderItems.push({
+        menuItemId: menuItem._id,
+        itemName: menuItem.name,       // snapshot
+        unitPrice: menuItem.price,     // snapshot
+        quantity: qty,
+        subtotal: lineSubtotal
+      });
+    }
+
+    subtotal = parseFloat(subtotal.toFixed(2));
+
+    // Get restaurant tax rate
+    const RestaurantProfile = tenantDb.model('RestaurantProfile');
+    const profile = await RestaurantProfile.findOne({ restaurantId: registry.restaurantId });
+    const taxPercent = profile?.taxInfo?.taxPercentage || 0;
+    const taxAmount = parseFloat(((subtotal * taxPercent) / 100).toFixed(2));
+    const total = parseFloat((subtotal + taxAmount).toFixed(2));
+
+    // --- Generate order number ---
+    const Order = tenantDb.model('Order');
+    const orderCount = await Order.countDocuments({ restaurantId: registry.restaurantId });
+    const orderNumber = `ORD-${String(orderCount + 1001).padStart(4, '0')}`;
+
+    // --- Create order ---
+    const order = await Order.create({
+      orderNumber,
+      restaurantId: registry.restaurantId,
+      tableId: table._id,
+      tableNumber: table.tableNumber,
+      customerName: customerName?.trim() || 'Guest',
+      customerPhone: customerPhone?.trim() || null,
+      items: orderItems,
+      subtotal,
+      taxPercent,
+      taxAmount,
+      discount: 0,
+      total,
+      status: 'PENDING',
+      paymentStatus: 'PENDING'
+    });
+
+    res.status(201).json({
+      success: true,
       data: {
-        restaurant,
-        menuItems,
-        categories
+        order: {
+          id: order._id,
+          orderNumber: order.orderNumber,
+          tableNumber: order.tableNumber,
+          items: order.items,
+          subtotal: order.subtotal,
+          taxAmount: order.taxAmount,
+          total: order.total,
+          status: order.status,
+          createdAt: order.createdAt
+        }
       }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/public/orders/:orderId
+ * Get order details for confirmation page
+ */
+exports.getOrder = async (req, res, next) => {
+  try {
+    const info = requireTenantDb(req, res);
+    if (!info) return;
+    const { tenantDb } = info;
+
+    const Order = tenantDb.model('Order');
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+
+    res.status(200).json({ success: true, data: { order } });
   } catch (error) {
     next(error);
   }

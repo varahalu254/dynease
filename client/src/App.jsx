@@ -84,6 +84,9 @@ function App() {
               <Route path="tables" element={<TablesManagement />} />
               <Route path="staff" element={<StaffManagement />} />
             </Route>
+            <Route path="/waiter">
+              <Route index element={<div className="p-4">Waiter Layout Pending (Needs Waiter Dashboard)</div>} />
+            </Route>
             <Route path="*" element={<div className="min-h-screen flex flex-col items-center justify-center p-10 text-center font-bold text-gray-400"><h1 className="text-4xl text-gray-800 mb-2">404</h1>Page not found on this restaurant</div>} />
           </Routes>
         </BrowserRouter>

@@ -15,9 +15,12 @@ export default function Login() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const token = params.get('token');
+    const role = params.get('role');
     if (token) {
       localStorage.setItem('token', token);
-      navigate('/restaurant');
+      if (role === 'RESTAURANT_STAFF') navigate('/waiter');
+      else if (role === 'KITCHEN_STAFF') navigate('/kitchen/orders');
+      else navigate('/restaurant');
     }
   }, [location, navigate]);
 
@@ -54,14 +57,18 @@ export default function Login() {
         // If it's a super admin
         if (user.role === 'SUPER_ADMIN') {
           localStorage.setItem('token', token);
-          window.location.href = window.location.hostname.includes('localhost') 
-            ? 'http://admin.localhost:5173' 
-            : 'http://admin.dynease.in'; // Temporary workaround for SSL
+          if (window.location.hostname.startsWith('admin.')) {
+            navigate('/');
+          } else {
+            window.location.href = window.location.hostname.includes('localhost') 
+              ? 'http://admin.localhost:5173' 
+              : 'https://admin.dynease.in';
+          }
           return;
         }
 
-        // If it's a restaurant owner
-        if (user.role === 'RESTAURANT_OWNER' && user.restaurantId) {
+        // If it's a restaurant owner, waiter, or kitchen staff
+        if (['RESTAURANT_OWNER', 'RESTAURANT_STAFF', 'KITCHEN_STAFF'].includes(user.role) && user.restaurantId) {
           const expectedSlug = user.restaurantId.slug;
           const currentHostname = window.location.hostname;
           
@@ -72,17 +79,21 @@ export default function Login() {
              isOnCorrectSubdomain = currentHostname === `${expectedSlug}.dynease.in`;
           }
 
+          let dashboardPath = '/restaurant';
+          if (user.role === 'RESTAURANT_STAFF') dashboardPath = '/waiter';
+          if (user.role === 'KITCHEN_STAFF') dashboardPath = '/kitchen/orders';
+
           if (isOnCorrectSubdomain) {
             // Logged in directly on their subdomain
             localStorage.setItem('token', token);
-            navigate('/restaurant');
+            navigate(dashboardPath);
           } else {
             // Logged in on the main domain (or wrong subdomain), redirect to their subdomain with token
             const protocol = window.location.protocol;
             const port = window.location.port ? `:${window.location.port}` : '';
             const domain = currentHostname.includes('localhost') ? 'localhost' : 'dynease.in';
             
-            window.location.href = `${protocol}//${expectedSlug}.${domain}${port}/login?token=${token}`;
+            window.location.href = `${protocol}//${expectedSlug}.${domain}${port}/login?token=${token}&role=${user.role}`;
           }
         } else {
            setError('Invalid account type.');

@@ -26,6 +26,7 @@ import RegisterRestaurant from './pages/RegisterRestaurant';
 import HowItWorks from './pages/HowItWorks';
 import Features from './pages/Features';
 import RestaurantDashboard from './pages/restaurant/Dashboard';
+import StaffManagement from './pages/restaurant/StaffManagement';
 import { Loader2 } from 'lucide-react';
 
 function SubdomainWrapper({ subdomain, children }) {
@@ -81,6 +82,7 @@ function App() {
             <Route index element={<RestaurantDashboard />} />
               <Route path="menu" element={<MenuManagement />} />
               <Route path="tables" element={<TablesManagement />} />
+              <Route path="staff" element={<StaffManagement />} />
             </Route>
             <Route path="*" element={<div className="min-h-screen flex flex-col items-center justify-center p-10 text-center font-bold text-gray-400"><h1 className="text-4xl text-gray-800 mb-2">404</h1>Page not found on this restaurant</div>} />
           </Routes>
@@ -148,6 +150,7 @@ function App() {
           <Route index element={<RestaurantDashboard />} />
           <Route path="menu" element={<MenuManagement />} />
           <Route path="tables" element={<TablesManagement />} />
+          <Route path="staff" element={<StaffManagement />} />
         </Route>
         
         {/* Admin Routes */}

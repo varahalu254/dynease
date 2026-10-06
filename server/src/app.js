@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const restaurantRoutes = require('./routes/restaurantRoutes');
 const tableRoutes = require('./routes/tableRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/auth', tenantResolver, authRoutes);
 // Apply tenantResolver to APIs that need tenant context
 app.use('/api/restaurant', tenantResolver, restaurantRoutes);
 app.use('/api/restaurant/tables', tenantResolver, tableRoutes);
+app.use('/api/restaurant/staff', tenantResolver, staffRoutes);
 app.use('/api/public', tenantResolver, publicRoutes);
 
 // Routes

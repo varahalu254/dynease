@@ -216,16 +216,16 @@ export default function StaffManagement() {
             <form className="p-6 space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+                <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email (for login)</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Role</label>
-                  <select name="role" value={formData.role} onChange={handleChange} required disabled={formData.role === 'RESTAURANT_OWNER'} className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-white disabled:bg-gray-100 disabled:text-gray-500">
+                  <select name="role" value={formData.role} onChange={handleChange} required disabled={formData.role === 'RESTAURANT_OWNER'} className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:text-gray-500">
                     <option value="RESTAURANT_STAFF">Waiter</option>
                     <option value="KITCHEN_STAFF">Kitchen Staff</option>
                     {formData.role === 'RESTAURANT_OWNER' && <option value="RESTAURANT_OWNER">Owner</option>}
@@ -233,12 +233,12 @@ export default function StaffManagement() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone (Optional)</label>
-                  <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+                  <input type="text" name="phone" value={formData.phone} onChange={handleChange} className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">{editingId ? 'New Password (leave blank to keep current)' : 'Password'}</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} required={!editingId} className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+                <input type="password" name="password" value={formData.password} onChange={handleChange} required={!editingId} className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900 bg-white" />
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <input type="checkbox" id="isActive" name="isActive" checked={formData.isActive} onChange={handleChange} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" />

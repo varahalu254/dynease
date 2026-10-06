@@ -10,12 +10,12 @@ export default function LandingPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-20 pb-4 md:pb-12 px-8">
+      <section className="pt-20 pb-4 md:pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
             Dine Smarter. <span className="text-orange-600">Order Faster.</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
             Turn every restaurant table into a seamless digital ordering experience. Scan. Order. Enjoy.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -30,7 +30,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="bg-gray-50 pt-8 md:pt-12 pb-24 px-8">
+      <section id="features" className="bg-gray-50 pt-8 md:pt-12 pb-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Everything you need to run a modern restaurant</h2>

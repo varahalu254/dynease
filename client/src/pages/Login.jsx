@@ -43,7 +43,7 @@ export default function Login() {
           localStorage.setItem('token', token);
           window.location.href = window.location.hostname.includes('localhost') 
             ? 'http://admin.localhost:5173' 
-            : 'https://admin.dynease.in';
+            : 'http://admin.dynease.in'; // Temporary workaround for SSL
           return;
         }
 
@@ -86,7 +86,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-6">
           <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-orange-600">

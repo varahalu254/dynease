@@ -14,15 +14,32 @@ const protect = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_prod');
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_prod');
+    } catch (tokenError) {
+      console.error('[Auth] Token verification failed:', tokenError.message);
+      return res.status(401).json({ success: false, message: 'Invalid token or token expired.', error: tokenError.message });
+    }
 
     // Check if user still exists
     let currentUser;
-    if (req.tenantDb) {
-      const TenantUser = req.tenantDb.model('User');
-      currentUser = await TenantUser.findById(decoded.id);
-    } else {
-      currentUser = await User.findById(decoded.id);
+    try {
+      if (req.tenantDb) {
+        const TenantUser = req.tenantDb.model('User');
+        currentUser = await TenantUser.findById(decoded.id);
+        if (!currentUser) {
+          console.error('[Auth] User not found in tenant database:', decoded.id);
+        }
+      } else {
+        currentUser = await User.findById(decoded.id);
+        if (!currentUser) {
+          console.error('[Auth] User not found in platform database:', decoded.id);
+        }
+      }
+    } catch (dbError) {
+      console.error('[Auth] Database lookup error:', dbError.message);
+      return res.status(401).json({ success: false, message: 'Error verifying user.', error: dbError.message });
     }
 
     if (!currentUser) {
@@ -33,6 +50,7 @@ const protect = async (req, res, next) => {
     req.user = currentUser;
     next();
   } catch (error) {
+    console.error('[Auth] Unexpected error:', error.message);
     return res.status(401).json({ success: false, message: 'Invalid token or token expired.', error: error.message });
   }
 };

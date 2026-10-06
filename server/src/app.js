@@ -41,7 +41,17 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+const path = require('path');
+
 const tenantResolver = require('./middlewares/tenantResolver');
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ success: true, message: 'API is running smoothly.' });
+});
 
 // Mount Routes
 app.use('/api/admin', adminRoutes);
@@ -55,15 +65,7 @@ app.use('/api/restaurant/tables', tenantResolver, tableRoutes);
 app.use('/api/restaurant/staff', tenantResolver, staffRoutes);
 app.use('/api/public', tenantResolver, publicRoutes);
 
-// Routes
-app.get('/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'API is running smoothly.' });
-});
-
-const path = require('path');
-app.use(express.static(path.join(__dirname, '../public')));
-
-// Serve React App for any unknown non-api routes
+// Serve React App for any unknown non-api routes (SPA fallback)
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
     return next();

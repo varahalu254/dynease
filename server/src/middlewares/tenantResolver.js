@@ -24,7 +24,7 @@ module.exports = async (req, res, next) => {
       }
     }
 
-    if (!subdomain || subdomain === 'localhost' || subdomain === '127' || subdomain === 'admin') {
+    if (!subdomain || subdomain === 'localhost' || subdomain === '127' || subdomain === 'admin' || subdomain === 'api' || subdomain === 'www') {
       return next();
     }
 

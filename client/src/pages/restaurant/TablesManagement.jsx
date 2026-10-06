@@ -10,11 +10,25 @@ export default function TablesManagement() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getHeaders = (includeContentType = true) => {
+    const token = localStorage.getItem('token');
+    const hostname = window.location.hostname;
+    const headers = { 'Authorization': `Bearer ${token}` };
+    if (includeContentType) headers['Content-Type'] = 'application/json';
+    let subdomain = '';
+    if (hostname.includes('dynease.in') && hostname !== 'dynease.in' && hostname !== 'www.dynease.in') {
+      subdomain = hostname.split('.')[0];
+    } else if (hostname.includes('localhost') && hostname !== 'localhost') {
+      subdomain = hostname.split('.')[0];
+    }
+    if (subdomain) headers['x-tenant-subdomain'] = subdomain;
+    return headers;
+  };
+
   const fetchTables = async () => {
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/tables`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getHeaders(false)
       });
       const data = await res.json();
       if (data.success) {
@@ -37,13 +51,9 @@ export default function TablesManagement() {
     setError('');
     
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/tables`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        },
+        headers: getHeaders(),
         body: JSON.stringify(formData)
       });
       
@@ -66,10 +76,9 @@ export default function TablesManagement() {
     if (!window.confirm('Are you sure you want to delete this table?')) return;
     
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/tables/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getHeaders(false)
       });
       
       if (res.ok) {

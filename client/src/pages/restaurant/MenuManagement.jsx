@@ -20,11 +20,27 @@ export default function MenuManagement() {
     fetchMenu();
   }, []);
 
+  const getHeaders = (isFormData = false) => {
+    const token = localStorage.getItem('token');
+    const hostname = window.location.hostname;
+    const headers = { 'Authorization': `Bearer ${token}` };
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    let subdomain = '';
+    if (hostname.includes('dynease.in') && hostname !== 'dynease.in' && hostname !== 'www.dynease.in') {
+      subdomain = hostname.split('.')[0];
+    } else if (hostname.includes('localhost') && hostname !== 'localhost') {
+      subdomain = hostname.split('.')[0];
+    }
+    if (subdomain) headers['x-tenant-subdomain'] = subdomain;
+    return headers;
+  };
+
   const fetchMenu = async () => {
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/menu`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getHeaders()
       });
       const data = await res.json();
       if (data.success) {
@@ -62,10 +78,9 @@ export default function MenuManagement() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/menu`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: getHeaders(true),
         body: data // Do NOT set Content-Type header when using FormData, browser does it automatically with boundary
       });
       const json = await res.json();

@@ -89,6 +89,24 @@ export default function TablesManagement() {
     }
   };
 
+  const handleToggleStatus = async (table) => {
+    const newStatus = table.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/tables/${table._id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTables(tables.map(t => t._id === table._id ? { ...t, status: newStatus } : t));
+      }
+    } catch (err) {
+      console.error('Failed to update table status', err);
+    }
+  };
+
   const printQR = (table) => {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -165,11 +183,17 @@ export default function TablesManagement() {
                   <h3 className="text-2xl font-bold text-gray-900 mb-1">Table {table.tableNumber}</h3>
                   <p className="text-gray-500 font-medium">{table.tableName || 'Main Area'} • {table.capacity || 4} Seats</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  table.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                }`}>
+                <button 
+                  onClick={() => handleToggleStatus(table)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-colors border ${
+                    table.status === 'ACTIVE' 
+                      ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200' 
+                      : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                  }`}
+                  title="Click to toggle status"
+                >
                   {table.status}
-                </span>
+                </button>
               </div>
 
               <div className="flex flex-col items-center bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6">

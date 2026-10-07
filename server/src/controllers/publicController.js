@@ -105,6 +105,7 @@ exports.getTableByNumber = async (req, res, next) => {
         restaurant: { 
           id: registry.restaurantId,
           name: profile.name,
+          subtitle: profile.subtitle || null,
           slug: registry.subdomain,
           logo: profile.logo?.secure_url || null,
           taxPercent: profile.taxInfo?.taxPercentage || 0
@@ -177,6 +178,7 @@ exports.getMenu = async (req, res, next) => {
         restaurant: {
           id: registry.restaurantId,
           name: profile.name,
+          subtitle: profile.subtitle || null,
           slug: registry.subdomain,
           logo: profile.logo?.secure_url || null,
           taxPercent: profile.taxInfo?.taxPercentage || 0
@@ -254,6 +256,7 @@ exports.getRestaurantMenu = async (req, res, next) => {
         restaurant: {
           id: registry.restaurantId,
           name: profile.name,
+          subtitle: profile.subtitle || null,
           slug: registry.subdomain,
           logo: profile.logo?.secure_url || null,
           taxPercent: profile.taxInfo?.taxPercentage || 0
@@ -372,6 +375,9 @@ exports.createOrder = async (req, res, next) => {
 
       // Emit to kitchen
       io.to(`kitchen:${registry.restaurantId}`).emit('new_order', payload);
+
+      // Emit to all waiters
+      io.to(`waiter:${registry.restaurantId}`).emit('new_order', payload);
 
       // Emit to assigned waiters
       const User = tenantDb.model('User');

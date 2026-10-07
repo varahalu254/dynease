@@ -285,3 +285,151 @@ exports.toggleMenuItemStatus = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+// ──────────────────────────────────────────
+//  ORDER MANAGEMENT
+// ──────────────────────────────────────────
+
+exports.getOrders = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const Order = req.tenantDb.model('Order');
+    
+    // Fetch today's orders or active orders. Let's fetch all orders and sort by descending date.
+    // In a real app we might paginate or filter by date range.
+    const orders = await Order.find({ restaurantId }).sort({ createdAt: -1 }).limit(100);
+    
+    res.status(200).json({ success: true, data: { orders } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { id } = req.params;
+    const { status, paymentStatus } = req.body;
+    
+    const Order = req.tenantDb.model('Order');
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (paymentStatus) updateData.paymentStatus = paymentStatus;
+    
+    const order = await Order.findOneAndUpdate(
+      { _id: id, restaurantId },
+      updateData,
+      { new: true }
+    );
+    
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+    
+    // Emit socket event for order update
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`kitchen:${restaurantId}`).emit('order_updated', order);
+      io.to(`waiter:${restaurantId}`).emit('order_updated', order);
+      io.to(`order:${order._id.toString()}`).emit('order_updated', order);
+    }
+    
+    res.status(200).json({ success: true, data: { order } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// ──────────────────────────────────────────
+//  PROFILE CRUD
+// ──────────────────────────────────────────
+
+exports.getProfile = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const RestaurantProfile = req.tenantDb.model('RestaurantProfile');
+    const profile = await RestaurantProfile.findOne({ restaurantId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Profile not found' });
+    }
+    res.status(200).json({ success: true, data: { profile } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { name, subtitle } = req.body;
+    const RestaurantProfile = req.tenantDb.model('RestaurantProfile');
+    
+    const profile = await RestaurantProfile.findOne({ restaurantId });
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Profile not found' });
+    }
+
+    if (name) profile.name = name.trim();
+    if (subtitle !== undefined) profile.subtitle = subtitle.trim();
+
+    await profile.save();
+    res.status(200).json({ success: true, data: { profile } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// ──────────────────────────────────────────
+//  STATS
+// ──────────────────────────────────────────
+
+exports.getStats = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const Order = req.tenantDb.model('Order');
+    const Table = req.tenantDb.model('Table');
+
+    // Get today's start and end date
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Fetch today's orders
+    const todaysOrders = await Order.find({
+      restaurantId,
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
+    });
+
+    const todaysOrdersCount = todaysOrders.length;
+    
+    // Calculate Revenue
+    const revenue = todaysOrders.reduce((sum, order) => {
+      // Only count completed/paid orders if needed, for now let's sum all non-cancelled
+      if (order.status !== 'CANCELLED') {
+        return sum + (order.totalAmount || 0);
+      }
+      return sum;
+    }, 0);
+
+    // Get active tables
+    const activeTablesCount = await Table.countDocuments({
+      restaurantId,
+      status: 'ACTIVE'
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        todaysOrders: todaysOrdersCount,
+        revenue: revenue,
+        activeTables: activeTablesCount
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

@@ -119,6 +119,41 @@ export function RestaurantProvider({ children }) {
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
   const cartSubtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
+  // ── Orders tracking ──
+  const myOrdersKey = session
+    ? `orders:${session.restaurant.slug}:${session.table.tableNumber}`
+    : null;
+    
+  const [myOrders, setMyOrders] = useState(() => {
+    if (!myOrdersKey) return [];
+    try {
+      const raw = localStorage.getItem(myOrdersKey);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    if (myOrdersKey) {
+      localStorage.setItem(myOrdersKey, JSON.stringify(myOrders));
+    }
+  }, [myOrders, myOrdersKey]);
+
+  useEffect(() => {
+    if (myOrdersKey) {
+      try {
+        const raw = localStorage.getItem(myOrdersKey);
+        setMyOrders(raw ? JSON.parse(raw) : []);
+      } catch { setMyOrders([]); }
+    }
+  }, [myOrdersKey]);
+
+  const addOrderId = useCallback((id) => {
+    setMyOrders(prev => {
+      if (!prev.includes(id)) return [id, ...prev];
+      return prev;
+    });
+  }, []);
+
   return (
     <RestaurantContext.Provider value={{
       slug,
@@ -131,7 +166,9 @@ export function RestaurantProvider({ children }) {
       addToCart,
       removeFromCart,
       updateQuantity,
-      clearCart
+      clearCart,
+      myOrders,
+      addOrderId
     }}>
       {children}
     </RestaurantContext.Provider>

@@ -12,7 +12,10 @@ import FeedbackForm from './pages/customer/FeedbackForm';
 import QRMenuLoader from './pages/customer/QRMenuLoader';
 import Login from './pages/Login';
 import KitchenOrders from './pages/kitchen/Orders';
-import WaiterDashboard from './pages/waiter/Dashboard';
+import WaiterLayout from './pages/waiter/Layout';
+import LiveOrders from './pages/waiter/LiveOrders';
+import PastOrders from './pages/waiter/PastOrders';
+import Profile from './pages/waiter/Profile';
 import TablesManagement from './pages/restaurant/TablesManagement';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdsManagement from './pages/admin/Adsmanagement';
@@ -33,6 +36,8 @@ import HowItWorks from './pages/HowItWorks';
 import Features from './pages/Features';
 import RestaurantDashboard from './pages/restaurant/Dashboard';
 import StaffManagement from './pages/restaurant/StaffManagement';
+import Orders from './pages/restaurant/Orders';
+import RestaurantSettings from './pages/restaurant/Settings';
 import { Loader2 } from 'lucide-react';
 
 function SubdomainWrapper({ subdomain, children }) {
@@ -101,9 +106,13 @@ function App() {
               <Route path="categories" element={<CategoryManagement />} />
               <Route path="tables" element={<TablesManagement />} />
               <Route path="staff" element={<StaffManagement />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="settings" element={<RestaurantSettings />} />
             </Route>
-            <Route path="/waiter">
-              <Route index element={<WaiterDashboard />} />
+            <Route path="/waiter" element={<WaiterLayout />}>
+              <Route index element={<LiveOrders />} />
+              <Route path="past-orders" element={<PastOrders />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
             <Route path="*" element={<div className="min-h-screen flex flex-col items-center justify-center p-10 text-center font-bold text-gray-400"><h1 className="text-4xl text-gray-800 mb-2">404</h1>Page not found on this restaurant</div>} />
           </Routes>
@@ -176,6 +185,7 @@ function App() {
           <Route path="categories" element={<CategoryManagement />} />
           <Route path="tables" element={<TablesManagement />} />
           <Route path="staff" element={<StaffManagement />} />
+          <Route path="orders" element={<Orders />} />
         </Route>
         
         {/* Admin Routes */}

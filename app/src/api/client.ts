@@ -1,0 +1,54 @@
+import axios from 'axios';
+import { Platform } from 'react-native';
+
+import * as SecureStore from 'expo-secure-store';
+
+// When using Android emulator, localhost is 10.0.2.2. For iOS/Web it's usually localhost.
+// Replace this with your actual local IP address if running on a physical device over Wi-Fi.
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.92.206.96:5000/api';
+
+const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor to add auth token in the future
+apiClient.interceptors.request.use(
+  async (config) => {
+    const token = await SecureStore.getItemAsync('token');
+    const subdomain = await SecureStore.getItemAsync('subdomain');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (subdomain) {
+      config.headers['x-tenant-subdomain'] = subdomain;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response && error.response.status === 401) {
+      await SecureStore.deleteItemAsync('token');
+      await SecureStore.deleteItemAsync('role');
+      await SecureStore.deleteItemAsync('subdomain');
+      await SecureStore.deleteItemAsync('restaurantName');
+      
+      const { router } = require('expo-router');
+      if (router.canDismiss()) {
+        router.dismissAll();
+      }
+      router.replace('/');
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;

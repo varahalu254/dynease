@@ -22,4 +22,15 @@ router.get('/menu', restaurantController.getMenu);
 router.delete('/menu/:id', restaurantController.deleteMenuItem);
 router.patch('/menu/:id/status', restaurantController.toggleMenuItemStatus);
 
+// ── Order routes ──
+router.get('/orders', restaurantController.getOrders);
+router.patch('/orders/:id/status', restaurantController.updateOrderStatus);
+
+// ── Stats routes ──
+router.get('/stats', restrictTo('RESTAURANT_OWNER'), restaurantController.getStats);
+
+// ── Profile routes ──
+router.get('/profile', restrictTo('RESTAURANT_OWNER'), restaurantController.getProfile);
+router.put('/profile', restrictTo('RESTAURANT_OWNER'), restaurantController.updateProfile);
+
 module.exports = router;

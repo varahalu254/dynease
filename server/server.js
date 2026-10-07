@@ -12,7 +12,14 @@ const server = http.createServer(app);
 // Socket.IO Setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+      // Allow any localhost origin (including subdomains) or the main client URL
+      if (!origin || origin.includes('localhost') || origin.includes('dynease.in')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true
   }

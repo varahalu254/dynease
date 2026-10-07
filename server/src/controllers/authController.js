@@ -79,6 +79,8 @@ exports.login = async (req, res, next) => {
       // If no tenant DB, they might be a restaurant owner trying to login on the platform URL
       if (!req.tenantDb) {
         const RestaurantRegistry = require('../models/platform/RestaurantRegistry');
+        
+        // 1. Check if they are an owner
         const registry = await RestaurantRegistry.findOne({ 
           $or: [{ ownerEmail: email }, { ownerPhone: email }] 
         });
@@ -86,8 +88,33 @@ exports.login = async (req, res, next) => {
           const tenantUrl = `http://${registry.subdomain}.localhost:5173/login`;
           return res.status(403).json({ 
             success: false, 
+            subdomain: registry.subdomain,
             message: `You are a restaurant owner. Please login at your dedicated restaurant portal: ${tenantUrl} (or https://${registry.subdomain}.dynease.in in production)` 
           });
+        }
+        
+        // 2. Check if they are a staff member in any active tenant database
+        const activeRegistries = await RestaurantRegistry.find({ status: 'ACTIVE' });
+        const TenantDatabaseManager = require('../services/TenantDatabaseManager');
+        for (const reg of activeRegistries) {
+          try {
+            const tempTenantDb = await TenantDatabaseManager.getConnection(reg.databaseName);
+            const TenantUser = tempTenantDb.model('User');
+            const staffUser = await TenantUser.findOne({ 
+              $or: [{ email: email }, { phone: email }] 
+            }).select('+password');
+            
+            if (staffUser && await staffUser.comparePassword(password, staffUser.password)) {
+              // Found the staff! Return a 403 with their subdomain so the frontend auto-retries.
+              return res.status(403).json({ 
+                success: false, 
+                subdomain: reg.subdomain,
+                message: `You are a staff member. Please login at your dedicated restaurant portal.` 
+              });
+            }
+          } catch (err) {
+            console.error(`Error checking staff login in DB ${reg.databaseName}:`, err);
+          }
         }
       }
       return res.status(401).json({ success: false, message: 'Incorrect email or password' });
@@ -133,7 +160,7 @@ exports.getMe = async (req, res, next) => {
     if (req.tenantDb) {
       const TenantUser = req.tenantDb.model('User');
       const RestaurantProfile = req.tenantDb.model('RestaurantProfile');
-      user = await TenantUser.findById(req.user.id);
+      user = await TenantUser.findById(req.user.id).populate('assignedTables');
       if (user && user.restaurantId) {
          restaurantProfile = await RestaurantProfile.findOne({ restaurantId: user.restaurantId });
          // Mock populate for frontend compatibility

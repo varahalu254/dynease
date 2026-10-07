@@ -5,7 +5,7 @@ import { useRestaurant, getTenantHeaders } from '../../context/RestaurantContext
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { session, cart, cartSubtotal, clearCart } = useRestaurant();
+  const { session, cart, cartSubtotal, clearCart, addOrderId } = useRestaurant();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -51,6 +51,7 @@ export default function Checkout() {
 
       if (data.success) {
         clearCart();
+        addOrderId(data.data.order.id);
         navigate(`/order/${data.data.order.id}`, { state: { order: data.data.order } });
       } else {
         setError(data.message || 'Failed to place order. Please try again.');

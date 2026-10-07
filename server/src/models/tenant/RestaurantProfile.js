@@ -11,6 +11,10 @@ const restaurantProfileSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  subtitle: {
+    type: String,
+    trim: true
+  },
   slug: {
     type: String,
     required: true

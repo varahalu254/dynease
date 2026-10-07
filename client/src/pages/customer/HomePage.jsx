@@ -141,9 +141,14 @@ export default function HomePage({ forcedSlug }) {
               </button>
             )}
             <div>
-              <h1 className="text-xl font-medium text-gray-800 leading-tight">
-                {selectedCategory || restaurant?.name || 'Menu'}
-              </h1>
+              <div className="flex flex-col">
+                <h1 className="text-xl font-bold text-gray-800 leading-tight">
+                  {selectedCategory || restaurant?.name || 'Menu'}
+                </h1>
+                {!selectedCategory && restaurant?.subtitle && (
+                  <span className="text-sm text-gray-500 font-medium">{restaurant.subtitle}</span>
+                )}
+              </div>
               {tableLabel && !selectedCategory && (
                 <span className="text-[10px] bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full mt-1 inline-block">
                   {tableLabel}

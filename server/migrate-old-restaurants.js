@@ -10,7 +10,7 @@ const MenuItemGlobal = require('./src/models/MenuItem'); // Fallback if exists
 
 async function migrate() {
   try {
-    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://dinesh_60:70Pbd88b7zL7YJ4s@cluster0.a622y.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'; // Found in earlier logs/context if needed, but I'll assume they have it in .env
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || // Found in earlier logs/context if needed, but I'll assume they have it in .env
     console.log('Connecting to', mongoUri);
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB');

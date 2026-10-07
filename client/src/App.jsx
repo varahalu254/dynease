@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useRestaurant } from './context/RestaurantContext';
 import Index from './pages/Index';
 import HomePage from './pages/customer/HomePage';
+import LandingPage from './pages/customer/LandingPage';
 import ItemDescription from './pages/customer/ItemDescription';
 import Cart from './pages/customer/Cart';
 import Checkout from './pages/customer/Checkout';
@@ -53,10 +55,17 @@ function SubdomainWrapper({ subdomain, children }) {
   return children;
 }
 
+function CustomerRoot({ forcedSlug }) {
+  const { session } = useRestaurant();
+  if (session?.table) {
+    return <HomePage forcedSlug={forcedSlug} />;
+  }
+  return <LandingPage />;
+}
+
 function App() {
   const hostname = window.location.hostname;
   let subdomain = null;
-
 
   // Detect if we are on a custom subdomain like "test.dynease.in"
   if (hostname.includes('dynease.in') && hostname !== 'dynease.in' && hostname !== 'www.dynease.in') {
@@ -73,7 +82,7 @@ function App() {
       <SubdomainWrapper subdomain={subdomain}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<HomePage forcedSlug={subdomain} />} />
+            <Route path="/" element={<CustomerRoot forcedSlug={subdomain} />} />
             {/* QR Entry - resolves token and sets session */}
             <Route path="/t/:qrToken" element={<QRMenuLoader />} />
             <Route path="/login" element={<Login />} />
@@ -146,7 +155,7 @@ function App() {
         <Route path="/register" element={<RegisterRestaurant />} />
         
         {/* Customer Routes (Fallback for local dev like /r/test) */}
-        <Route path="/r/:slug" element={<HomePage />} />
+        <Route path="/r/:slug" element={<CustomerRoot />} />
         <Route path="/item/:id" element={<ItemDescription />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />

@@ -13,6 +13,7 @@ const orderLimiter = rateLimit({
 
 // QR resolution
 router.get('/qr/:qrToken', publicController.getTableByQR);
+router.get('/table/:tableNumber', publicController.getTableByNumber);
 
 // Menu (subdomain-based)
 router.get('/menu', publicController.getMenu);

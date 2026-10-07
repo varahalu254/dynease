@@ -67,6 +67,62 @@ exports.getTableByQR = async (req, res, next) => {
 };
 
 /**
+ * GET /api/public/table/:tableNumber
+ * Resolves a table number → restaurant + table info
+ */
+exports.getTableByNumber = async (req, res, next) => {
+  try {
+    const { tableNumber } = req.params;
+    
+    const info = requireTenantDb(req, res);
+    if (!info) return;
+    const { tenantDb, registry } = info;
+
+    const Table = tenantDb.model('Table');
+    const table = await Table.findOne({ tableNumber, status: 'ACTIVE' });
+    if (!table) {
+      return res.status(404).json({ 
+        success: false, 
+        code: 'INVALID_TABLE',
+        message: 'This table number is invalid or inactive.' 
+      });
+    }
+
+    const RestaurantProfile = tenantDb.model('RestaurantProfile');
+    const profile = await RestaurantProfile.findOne({ restaurantId: registry.restaurantId });
+    
+    if (!profile || !profile.isActive) {
+      return res.status(403).json({ 
+        success: false, 
+        code: 'RESTAURANT_UNAVAILABLE',
+        message: 'This restaurant is currently unavailable.' 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: { 
+        restaurant: { 
+          id: registry.restaurantId,
+          name: profile.name,
+          slug: registry.subdomain,
+          logo: profile.logo?.secure_url || null,
+          taxPercent: profile.taxInfo?.taxPercentage || 0
+        },
+        table: { 
+          id: table._id, 
+          tableNumber: table.tableNumber, 
+          tableName: table.tableName || null
+        },
+        session: { qrToken: table.qrToken || tableNumber } // fallback to tableNumber if no qrToken
+      } 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * GET /api/public/menu
  * Returns the restaurant menu grouped by category
  */

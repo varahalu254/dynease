@@ -15,6 +15,7 @@
     "autoprefixer": "^10.6.1",
     "axios": "^1.20.0",
     "clsx": "^2.1.1",
+    "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.52.0",
     "postcss": "^8.5.29",
     "qrcode.react": "^4.2.0",

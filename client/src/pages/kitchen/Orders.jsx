@@ -17,7 +17,8 @@ export default function KitchenOrders() {
       return;
     }
 
-    const socket = io(import.meta.env.VITE_API_URL, {
+    const socketUrl = import.meta.env.VITE_API_URL.replace(/\/api$/, '');
+    const socket = io(socketUrl, {
       withCredentials: true,
     });
 

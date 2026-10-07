@@ -16,8 +16,9 @@ export default function WaiterDashboard() {
       return;
     }
 
-    // Connect to Socket.io
-    const socket = io(import.meta.env.VITE_API_URL, {
+    // Connect to Socket.io (strip /api from VITE_API_URL if present)
+    const socketUrl = import.meta.env.VITE_API_URL.replace(/\/api$/, '');
+    const socket = io(socketUrl, {
       withCredentials: true,
     });
 

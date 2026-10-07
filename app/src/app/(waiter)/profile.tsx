@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   roleText: {
-    color: '#2563eb',
+    color: '#ea580c',
     fontSize: 12,
     fontWeight: 'bold',
   },

@@ -91,7 +91,7 @@ export default function CategoriesScreen() {
           setDescription(item.description || '');
           setShowModal(true);
         }}>
-          <Ionicons name="pencil-outline" size={20} color="#3b82f6" />
+          <Ionicons name="pencil-outline" size={20} color="#f97316" />
         </TouchableOpacity>
         <TouchableOpacity style={{ marginLeft: 10 }} onPress={() => handleDelete(item._id)}>
           <Ionicons name="trash-outline" size={20} color="#ef4444" />
@@ -116,13 +116,13 @@ export default function CategoriesScreen() {
       </View>
 
       {loading && categories.length === 0 ? (
-        <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 50 }} />
+        <ActivityIndicator size="large" color="#f97316" style={{ marginTop: 50 }} />
       ) : (
         <FlatList
           data={categories}
           keyExtractor={(item) => item._id}
           renderItem={renderCategory}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />}
           contentContainerStyle={{ paddingBottom: 20 }}
           ListEmptyComponent={<Text style={styles.emptyText}>No categories found.</Text>}
         />
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc', padding: 15 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#0f172a' },
-  addButton: { flexDirection: 'row', backgroundColor: '#3b82f6', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
+  addButton: { flexDirection: 'row', backgroundColor: '#f97316', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
   addText: { color: '#fff', fontWeight: 'bold', marginLeft: 5 },
   
   categoryCard: { backgroundColor: '#fff', padding: 15, borderRadius: 8, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
@@ -180,6 +180,6 @@ const styles = StyleSheet.create({
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
   cancelBtn: { flex: 1, padding: 12, backgroundColor: '#f1f5f9', borderRadius: 8, alignItems: 'center' },
   cancelBtnText: { color: '#475569', fontWeight: 'bold' },
-  saveBtn: { flex: 1, padding: 12, backgroundColor: '#3b82f6', borderRadius: 8, alignItems: 'center' },
+  saveBtn: { flex: 1, padding: 12, backgroundColor: '#f97316', borderRadius: 8, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: 'bold' }
 });

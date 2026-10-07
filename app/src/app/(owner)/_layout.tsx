@@ -33,7 +33,7 @@ export default function OwnerLayout() {
 
   return (
     <Drawer 
-      screenOptions={{ headerShown: true, drawerActiveTintColor: '#3b82f6' }}
+      screenOptions={{ headerShown: true, drawerActiveTintColor: '#f97316' }}
       drawerContent={(props) => (
         <DrawerContentScrollView {...props}>
           <DrawerItemList {...props} />
@@ -47,12 +47,7 @@ export default function OwnerLayout() {
               await SecureStore.deleteItemAsync('restaurantName');
               await SecureStore.deleteItemAsync('role');
               
-              if (router.canDismiss()) {
-                router.dismissAll();
-              }
-              setTimeout(() => {
-                router.replace('/');
-              }, 100);
+              router.replace('/');
             }}
           />
         </DrawerContentScrollView>

@@ -9,7 +9,7 @@ export default function WaiterLayout() {
 
   return (
     <Drawer 
-      screenOptions={{ headerShown: true, drawerActiveTintColor: '#10b981' }}
+      screenOptions={{ headerShown: true, drawerActiveTintColor: '#f97316' }}
       drawerContent={(props) => (
         <DrawerContentScrollView {...props}>
           <DrawerItemList {...props} />
@@ -23,12 +23,7 @@ export default function WaiterLayout() {
               await SecureStore.deleteItemAsync('restaurantName');
               await SecureStore.deleteItemAsync('role');
               
-              if (router.canDismiss()) {
-                router.dismissAll();
-              }
-              setTimeout(() => {
-                router.replace('/');
-              }, 100);
+              router.replace('/');
             }}
           />
         </DrawerContentScrollView>

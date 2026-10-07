@@ -136,14 +136,14 @@ const styles = StyleSheet.create({
     padding: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e2e8f0' 
   },
   backButton: { padding: 8 },
-  backButtonText: { color: '#3b82f6', fontSize: 16, fontWeight: '600' },
+  backButtonText: { color: '#f97316', fontSize: 16, fontWeight: '600' },
   title: { fontSize: 20, fontWeight: 'bold', color: '#0f172a' },
   content: { flex: 1, flexDirection: 'row' },
   
   menuSection: { flex: 2, padding: 15, borderRightWidth: 1, borderRightColor: '#e2e8f0' },
   categoryTabs: { flexDirection: 'row', marginBottom: 15 },
   tab: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#e2e8f0', marginRight: 10 },
-  activeTab: { backgroundColor: '#3b82f6' },
+  activeTab: { backgroundColor: '#f97316' },
   tabText: { color: '#64748b', fontWeight: '600' },
   activeTabText: { color: '#fff' },
   
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 
   },
   itemName: { fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 5 },
-  itemPrice: { fontSize: 14, color: '#10b981', fontWeight: '600' },
-  addButton: { position: 'absolute', bottom: 10, right: 10, backgroundColor: '#3b82f6', width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
+  itemPrice: { fontSize: 14, color: '#f97316', fontWeight: '600' },
+  addButton: { position: 'absolute', bottom: 10, right: 10, backgroundColor: '#f97316', width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
   addText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 
   cartSection: { flex: 1, backgroundColor: '#fff', flexDirection: 'column' },
@@ -166,14 +166,14 @@ const styles = StyleSheet.create({
   cartItemPrice: { fontSize: 14, color: '#64748b', marginTop: 4 },
   quantityControls: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 8 },
   qtyBtn: { padding: 8, paddingHorizontal: 12 },
-  qtyBtnText: { fontSize: 18, color: '#3b82f6', fontWeight: 'bold' },
+  qtyBtnText: { fontSize: 18, color: '#f97316', fontWeight: 'bold' },
   qtyText: { fontSize: 16, fontWeight: '600', paddingHorizontal: 8 },
   
   checkoutFooter: { padding: 20, backgroundColor: '#f8fafc', borderTopWidth: 1, borderTopColor: '#e2e8f0' },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
   totalLabel: { fontSize: 18, fontWeight: '600', color: '#64748b' },
   totalValue: { fontSize: 24, fontWeight: 'bold', color: '#0f172a' },
-  submitButton: { backgroundColor: '#10b981', padding: 16, borderRadius: 12, alignItems: 'center' },
+  submitButton: { backgroundColor: '#f97316', padding: 16, borderRadius: 12, alignItems: 'center' },
   disabledButton: { backgroundColor: '#94a3b8' },
   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });

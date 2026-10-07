@@ -23,12 +23,7 @@ export default function KitchenLayout() {
               await SecureStore.deleteItemAsync('restaurantName');
               await SecureStore.deleteItemAsync('role');
               
-              if (router.canDismiss()) {
-                router.dismissAll();
-              }
-              setTimeout(() => {
-                router.replace('/');
-              }, 100);
+              router.replace('/');
             }}
           />
         </DrawerContentScrollView>

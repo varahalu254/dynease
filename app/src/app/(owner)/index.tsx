@@ -40,7 +40,7 @@ export default function OwnerDashboard() {
     <ScrollView 
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />
       }
     >
       <Text style={styles.title}>Welcome to </Text>
@@ -59,7 +59,7 @@ export default function OwnerDashboard() {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Active Tables</Text>
-          <Text style={[styles.cardValue, { color: '#2563eb' }]}>{stats.activeTables}</Text>
+          <Text style={[styles.cardValue, { color: '#ea580c' }]}>{stats.activeTables}</Text>
         </View>
       </View>
     </ScrollView>

@@ -148,6 +148,6 @@ const styles = StyleSheet.create({
   passwordContainer: { width: '100%', flexDirection: 'row', backgroundColor: '#fff', borderRadius: 8, marginBottom: 15, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' },
   passwordInput: { flex: 1, padding: 15, fontSize: 16 },
   eyeIcon: { padding: 15 },
-  loginButton: { width: '100%', backgroundColor: '#3b82f6', padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 30 },
+  loginButton: { width: '100%', backgroundColor: '#f97316', padding: 15, borderRadius: 8, alignItems: 'center', marginBottom: 30 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });

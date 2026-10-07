@@ -100,7 +100,7 @@ export default function MenuScreen() {
       </View>
       <View style={styles.cardActions}>
         <TouchableOpacity onPress={() => handleToggle(item)} style={styles.actionBtn}>
-          <Ionicons name={item.isAvailable ? 'toggle' : 'toggle-outline'} size={32} color={item.isAvailable ? '#10b981' : '#94a3b8'} />
+          <Ionicons name={item.isAvailable ? 'toggle' : 'toggle-outline'} size={32} color={item.isAvailable ? '#f97316' : '#94a3b8'} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => {
           setEditingId(item._id);
@@ -113,7 +113,7 @@ export default function MenuScreen() {
           });
           setShowModal(true);
         }} style={styles.actionBtn}>
-          <Ionicons name="pencil-outline" size={24} color="#3b82f6" />
+          <Ionicons name="pencil-outline" size={24} color="#f97316" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDelete(item._id)} style={styles.actionBtn}>
           <Ionicons name="trash-outline" size={24} color="#ef4444" />

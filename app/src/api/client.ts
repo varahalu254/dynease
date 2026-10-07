@@ -42,10 +42,10 @@ apiClient.interceptors.response.use(
       await SecureStore.deleteItemAsync('restaurantName');
       
       const { router } = require('expo-router');
-      if (router.canDismiss()) {
-        router.dismissAll();
-      }
       router.replace('/');
+
+      // Return a clean error instead of the full AxiosError to avoid massive red stack traces on logout
+      return Promise.reject(new Error('Session expired (401). Logged out automatically.'));
     }
     return Promise.reject(error);
   }

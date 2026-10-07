@@ -88,7 +88,7 @@ export default function TablesScreen() {
     <View style={styles.card}>
       <View style={styles.cardInfo}>
         <View style={styles.tableIcon}>
-          <Ionicons name="restaurant" size={24} color="#3b82f6" />
+          <Ionicons name="restaurant" size={24} color="#f97316" />
         </View>
         <View>
           <Text style={styles.tableName}>Table {item.tableNumber}</Text>
@@ -113,7 +113,7 @@ export default function TablesScreen() {
           setCapacity(item.capacity.toString());
           setShowModal(true);
         }} style={styles.actionBtn}>
-          <Ionicons name="pencil-outline" size={24} color="#3b82f6" />
+          <Ionicons name="pencil-outline" size={24} color="#f97316" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDelete(item._id)} style={styles.actionBtn}>
           <Ionicons name="trash-outline" size={24} color="#ef4444" />
@@ -138,7 +138,7 @@ export default function TablesScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 50 }} />
+        <ActivityIndicator size="large" color="#f97316" style={{ marginTop: 50 }} />
       ) : (
         <FlatList
           data={tables}
@@ -147,7 +147,7 @@ export default function TablesScreen() {
           contentContainerStyle={{ paddingBottom: 20 }}
           ListEmptyComponent={<Text style={styles.emptyText}>No tables found.</Text>}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />
           }
         />
       )}
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc', padding: 15 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#0f172a' },
-  addButton: { flexDirection: 'row', backgroundColor: '#3b82f6', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
+  addButton: { flexDirection: 'row', backgroundColor: '#f97316', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
   addText: { color: '#fff', fontWeight: 'bold', marginLeft: 5 },
   
   card: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 3, borderWidth: 1, borderColor: '#f1f5f9' },
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
   cancelBtn: { flex: 1, padding: 12, backgroundColor: '#f1f5f9', borderRadius: 8, alignItems: 'center' },
   cancelBtnText: { color: '#475569', fontWeight: 'bold' },
-  saveBtn: { flex: 1, padding: 12, backgroundColor: '#3b82f6', borderRadius: 8, alignItems: 'center' },
+  saveBtn: { flex: 1, padding: 12, backgroundColor: '#f97316', borderRadius: 8, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: 'bold' },
   
   statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12, fontSize: 10, fontWeight: 'bold', overflow: 'hidden', alignSelf: 'flex-start', borderWidth: 1 },

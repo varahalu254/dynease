@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f59e0b',
   },
   readyBtn: {
-    backgroundColor: '#10b981',
+    backgroundColor: '#f97316',
   },
   actionText: {
     color: '#fff',

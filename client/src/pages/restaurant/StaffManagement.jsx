@@ -8,17 +8,21 @@ export default function StaffManagement() {
   const [editingId, setEditingId] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [tables, setTables] = useState([]);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     role: 'RESTAURANT_STAFF',
     phone: '',
-    isActive: true
+    isActive: true,
+    assignedTables: []
   });
 
   useEffect(() => {
     fetchStaff();
+    fetchTables();
   }, []);
 
   const getHeaders = () => {
@@ -55,6 +59,20 @@ export default function StaffManagement() {
     }
   };
 
+  const fetchTables = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/tables`, {
+        headers: getHeaders()
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTables(data.data.tables);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleChange = (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
@@ -62,7 +80,7 @@ export default function StaffManagement() {
 
   const openAddModal = () => {
     setEditingId(null);
-    setFormData({ name: '', email: '', password: '', role: 'RESTAURANT_STAFF', phone: '', isActive: true });
+    setFormData({ name: '', email: '', password: '', role: 'RESTAURANT_STAFF', phone: '', isActive: true, assignedTables: [] });
     setShowModal(true);
     setShowPassword(false);
   };
@@ -75,10 +93,22 @@ export default function StaffManagement() {
       password: '', // Leave blank unless changing
       role: staff.role,
       phone: staff.phone || '',
-      isActive: staff.isActive
+      isActive: staff.isActive,
+      assignedTables: staff.assignedTables ? staff.assignedTables.map(t => typeof t === 'string' ? t : t._id) : []
     });
     setShowPassword(false);
     setShowModal(true);
+  };
+
+  const handleTableToggle = (tableId) => {
+    setFormData(prev => {
+      const isSelected = prev.assignedTables.includes(tableId);
+      if (isSelected) {
+        return { ...prev, assignedTables: prev.assignedTables.filter(id => id !== tableId) };
+      } else {
+        return { ...prev, assignedTables: [...prev.assignedTables, tableId] };
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -175,6 +205,15 @@ export default function StaffManagement() {
                     <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${roleColors[staff.role] || 'bg-gray-100 text-gray-600'}`}>
                       {staff.role.replace('_', ' ')}
                     </span>
+                    {staff.role === 'RESTAURANT_STAFF' && staff.assignedTables && staff.assignedTables.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {staff.assignedTables.map(t => (
+                          <span key={t._id || t} className="bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">
+                            Table {t.tableNumber || t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td className="p-4">
                     {staff.isActive ? (
@@ -259,6 +298,29 @@ export default function StaffManagement() {
                   </button>
                 </div>
               </div>
+
+              {formData.role === 'RESTAURANT_STAFF' && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Assign Tables</label>
+                  <div className="border border-gray-200 rounded-xl p-3 bg-gray-50 max-h-40 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {tables.length === 0 ? (
+                      <div className="col-span-full text-sm text-gray-500 text-center py-2">No tables found. Create tables first.</div>
+                    ) : (
+                      tables.map(table => (
+                        <label key={table._id} className="flex items-center gap-2 p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-orange-50 hover:border-orange-200 transition-colors">
+                          <input 
+                            type="checkbox" 
+                            checked={formData.assignedTables.includes(table._id)}
+                            onChange={() => handleTableToggle(table._id)}
+                            className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 border-gray-300"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Table {table.tableNumber}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-2">
                 <input type="checkbox" id="isActive" name="isActive" checked={formData.isActive} onChange={handleChange} className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" />
                 <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">Account is Active</label>

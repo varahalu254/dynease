@@ -39,7 +39,11 @@ const userSchema = new mongoose.Schema({
   emailVerified: {
     type: Boolean,
     default: false
-  }
+  },
+  assignedTables: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Table'
+  }]
 }, { timestamps: true });
 
 // Hash password before saving

@@ -4,7 +4,9 @@ exports.getStaff = async (req, res, next) => {
   try {
     const User = req.tenantDb.model('User');
     // Don't return SUPER_ADMIN or CUSTOMER. Only restaurant staff/owner
-    const staff = await User.find({ role: { $in: ['RESTAURANT_OWNER', 'RESTAURANT_STAFF', 'KITCHEN_STAFF'] } }).sort('-createdAt');
+    const staff = await User.find({ role: { $in: ['RESTAURANT_OWNER', 'RESTAURANT_STAFF', 'KITCHEN_STAFF'] } })
+                            .populate('assignedTables', 'tableNumber tableName')
+                            .sort('-createdAt');
     res.status(200).json({ success: true, data: { staff } });
   } catch (error) {
     next(error);
@@ -14,7 +16,7 @@ exports.getStaff = async (req, res, next) => {
 exports.createStaff = async (req, res, next) => {
   try {
     const User = req.tenantDb.model('User');
-    const { name, email, password, role, phone } = req.body;
+    const { name, email, password, role, phone, assignedTables } = req.body;
 
     if (!name || !email || !password || !role) {
       return res.status(400).json({ success: false, message: 'Please provide name, email, password, and role.' });
@@ -31,6 +33,7 @@ exports.createStaff = async (req, res, next) => {
       password,
       role,
       phone,
+      assignedTables: role === 'RESTAURANT_STAFF' ? (assignedTables || []) : [],
       restaurantId: req.user.restaurantId,
       isActive: true,
       emailVerified: true
@@ -46,7 +49,7 @@ exports.updateStaff = async (req, res, next) => {
   try {
     const User = req.tenantDb.model('User');
     const { id } = req.params;
-    const { name, email, role, phone, password, isActive } = req.body;
+    const { name, email, role, phone, password, isActive, assignedTables } = req.body;
 
     const user = await User.findById(id);
     if (!user) {
@@ -62,6 +65,11 @@ exports.updateStaff = async (req, res, next) => {
     user.role = role || user.role;
     user.phone = phone || user.phone;
     if (isActive !== undefined) user.isActive = isActive;
+    if (user.role === 'RESTAURANT_STAFF' && assignedTables !== undefined) {
+      user.assignedTables = assignedTables;
+    } else if (user.role !== 'RESTAURANT_STAFF') {
+      user.assignedTables = [];
+    }
     
     if (password) {
       user.password = password; // pre-save hook will hash it

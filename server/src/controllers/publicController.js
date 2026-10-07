@@ -358,6 +358,29 @@ exports.createOrder = async (req, res, next) => {
       paymentStatus: 'PENDING'
     });
 
+    const io = req.app.get('io');
+    if (io) {
+      const payload = {
+        id: order._id,
+        orderNumber: order.orderNumber,
+        tableNumber: order.tableNumber,
+        items: order.items,
+        total: order.total,
+        status: order.status,
+        createdAt: order.createdAt
+      };
+
+      // Emit to kitchen
+      io.to(`kitchen:${registry.restaurantId}`).emit('new_order', payload);
+
+      // Emit to assigned waiters
+      const User = tenantDb.model('User');
+      const waiters = await User.find({ role: 'RESTAURANT_STAFF', assignedTables: table._id });
+      for (const w of waiters) {
+        io.to(`waiter_user:${w._id.toString()}`).emit('new_order', payload);
+      }
+    }
+
     res.status(201).json({
       success: true,
       data: {

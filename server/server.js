@@ -19,6 +19,7 @@ const io = new Server(server, {
 });
 
 require('./src/sockets')(io);
+app.set('io', io);
 
 // Database connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/dynease')

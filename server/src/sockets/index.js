@@ -13,6 +13,14 @@ module.exports = (io) => {
       console.log(`Socket ${socket.id} joined kitchen:${restaurantId}`);
     });
 
+    socket.on('waiter:join', ({ restaurantId, waiterId }) => {
+      socket.join(`waiter:${restaurantId}`);
+      if (waiterId) {
+        socket.join(`waiter_user:${waiterId}`);
+      }
+      console.log(`Socket ${socket.id} joined waiter:${restaurantId} and waiter_user:${waiterId}`);
+    });
+
     socket.on('customer:join', (orderId) => {
       socket.join(`order:${orderId}`);
       console.log(`Socket ${socket.id} joined order:${orderId}`);

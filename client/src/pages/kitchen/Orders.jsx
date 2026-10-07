@@ -1,32 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { Clock, CheckCircle, ChefHat } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const mockOrders = [
-  {
-    id: '#DN1024',
-    table: '12',
-    status: 'NEW',
-    time: new Date(Date.now() - 5 * 60000), // 5 mins ago
-    items: [
-      { name: 'Chicken Biryani', qty: 2, note: 'Extra spicy', addons: ['Raita'] },
-      { name: 'Coke', qty: 2 }
-    ]
-  },
-  {
-    id: '#DN1025',
-    table: '4',
-    status: 'PREPARING',
-    time: new Date(Date.now() - 15 * 60000), // 15 mins ago
-    items: [
-      { name: 'Paneer Tikka', qty: 1 }
-    ]
-  }
-];
+const mockOrders = []; // removed mock data so it starts empty in real app
 
 export default function KitchenOrders() {
   const [orders, setOrders] = useState(mockOrders);
+  const [connected, setConnected] = useState(false);
+  const navigate = useNavigate();
 
-  // Future: Socket.io logic will go here
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    const socket = io(import.meta.env.VITE_API_URL, {
+      withCredentials: true,
+    });
+
+    socket.on('connect', () => {
+      setConnected(true);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        socket.emit('kitchen:join', payload.restaurantId);
+      } catch (err) {
+        console.error("Failed to decode token", err);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      setConnected(false);
+    });
+
+    socket.on('new_order', (orderPayload) => {
+      setOrders(prev => [
+        {
+          id: orderPayload.orderNumber || orderPayload.id,
+          table: orderPayload.tableNumber,
+          status: orderPayload.status,
+          time: new Date(orderPayload.createdAt),
+          items: orderPayload.items
+        },
+        ...prev
+      ]);
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(e => console.log(e));
+      } catch(e){}
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [navigate]);
 
   const moveOrder = (id, newStatus) => {
     setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus } : o));
@@ -120,10 +149,9 @@ export default function KitchenOrders() {
           <p className="text-gray-500 text-sm">Paradise Biryani</p>
         </div>
         <div className="flex items-center gap-4">
-           {/* Connection status can go here */}
-           <span className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-full text-sm font-medium">
-             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-             Live
+           <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${connected ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+             <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+             {connected ? 'Live' : 'Disconnected'}
            </span>
         </div>
       </header>

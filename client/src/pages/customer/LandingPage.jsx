@@ -18,8 +18,8 @@ export default function LandingPage({ onSessionEstablished }) {
       scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
       scanner.render(
         (decodedText) => {
-          // If decodedText is a URL from our platform (e.g. https://<res>.dynease.in/t/<qrToken>)
-          const match = decodedText.match(/\/t\/([^/?#]+)/);
+          // If decodedText is a URL from our platform (e.g. https://<res>.dynease.in/menu/<qrToken> or /t/<qrToken>)
+          const match = decodedText.match(/\/(?:t|menu)\/([^/?#]+)/);
           if (match) {
             scanner.clear();
             navigate(`/t/${match[1]}`);

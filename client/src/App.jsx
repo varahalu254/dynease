@@ -85,6 +85,7 @@ function App() {
             <Route path="/" element={<CustomerRoot forcedSlug={subdomain} />} />
             {/* QR Entry - resolves token and sets session */}
             <Route path="/t/:qrToken" element={<QRMenuLoader />} />
+            <Route path="/menu/:qrToken" element={<QRMenuLoader />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<RegisterRestaurant />} />
             <Route path="/item/:id" element={<ItemDescription />} />

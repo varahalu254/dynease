@@ -18,13 +18,11 @@ export default function LandingPage({ onSessionEstablished }) {
       scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
       scanner.render(
         (decodedText) => {
-          // If decodedText is a URL from our platform (e.g. https://<res>.dynease.in/menu/<qrToken> or /t/<qrToken>)
           const match = decodedText.match(/\/(?:t|menu)\/([^/?#]+)/);
           if (match) {
             scanner.clear();
             navigate(`/t/${match[1]}`);
           } else {
-            // Might just be a raw token
             scanner.clear();
             navigate(`/t/${decodedText}`);
           }
@@ -75,61 +73,61 @@ export default function LandingPage({ onSessionEstablished }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex flex-col items-center justify-center p-6 relative">
+    <div className="min-h-screen bg-[var(--color-background)] flex flex-col items-center justify-center p-6 relative">
       <div className="w-full max-w-sm">
         {/* Logo Area */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-orange-600 mb-2">Dynease</h1>
-          <p className="text-gray-600 font-medium">Welcome to the E-Menu</p>
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-serif text-[var(--color-text)] mb-3 tracking-wide">Dynease</h1>
+          <p className="text-[var(--color-text-muted)] font-light">Welcome to the digital menu</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-orange-100">
-          <div className="flex border-b border-gray-100">
+        <div className="bg-white rounded-[var(--radius-sm)] shadow-sm border border-[var(--color-border)] overflow-hidden">
+          <div className="flex border-b border-[var(--color-border)]">
             <button
               onClick={() => setActiveTab('code')}
-              className={`flex-1 py-4 font-bold text-sm flex items-center justify-center gap-2 transition-colors ${
-                activeTab === 'code' ? 'text-orange-600 bg-orange-50/50' : 'text-gray-500 hover:bg-gray-50'
+              className={`flex-1 py-4 font-medium text-xs tracking-wide uppercase flex items-center justify-center gap-2 transition-colors ${
+                activeTab === 'code' ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] bg-[var(--color-background)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-background)]'
               }`}
             >
-              <Keyboard size={18} /> Enter Code
+              <Keyboard size={16} /> Enter Code
             </button>
             <button
               onClick={() => setActiveTab('scan')}
-              className={`flex-1 py-4 font-bold text-sm flex items-center justify-center gap-2 transition-colors border-l border-gray-100 ${
-                activeTab === 'scan' ? 'text-orange-600 bg-orange-50/50' : 'text-gray-500 hover:bg-gray-50'
+              className={`flex-1 py-4 font-medium text-xs tracking-wide uppercase flex items-center justify-center gap-2 transition-colors border-l border-[var(--color-border)] ${
+                activeTab === 'scan' ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)] bg-[var(--color-background)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-background)]'
               }`}
             >
-              <QrCode size={18} /> Scan QR
+              <QrCode size={16} /> Scan QR
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="p-8">
             {activeTab === 'code' ? (
               <form onSubmit={handleSubmitCode}>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2">Table Code</label>
+                <div className="mb-6">
+                  <label className="block text-[var(--color-text)] text-xs font-medium uppercase tracking-wide mb-3">Table Code</label>
                   <input
                     type="text"
                     value={tableCode}
                     onChange={(e) => setTableCode(e.target.value)}
                     placeholder="e.g. 5"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium text-lg text-center"
+                    className="w-full px-4 py-3 bg-[var(--color-background)] border border-[var(--color-border)] rounded-[var(--radius-sm)] focus:outline-none focus:border-[var(--color-primary)] font-serif text-lg text-center transition-colors"
                     required
                   />
                 </div>
-                {errorMsg && <p className="text-red-500 text-sm mb-4 font-medium text-center">{errorMsg}</p>}
+                {errorMsg && <p className="text-red-700 bg-red-50 p-3 rounded-[var(--radius-sm)] text-sm mb-6 font-medium text-center border border-red-200">{errorMsg}</p>}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-[var(--color-primary)] text-white font-medium text-sm tracking-wide uppercase py-3.5 rounded-[var(--radius-sm)] hover:bg-[var(--color-primary-light)] transition-colors flex items-center justify-center gap-2"
                 >
-                  {loading ? <Loader2 size={20} className="animate-spin" /> : 'Open Menu'}
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : 'Open Menu'}
                 </button>
               </form>
             ) : (
               <div className="text-center">
-                <div id="reader" className="overflow-hidden rounded-2xl border-2 border-orange-100 mb-4 bg-gray-50"></div>
-                <p className="text-gray-500 text-sm">Point your camera at the QR code on your table.</p>
+                <div id="reader" className="overflow-hidden rounded-[var(--radius-sm)] border border-[var(--color-border)] mb-6 bg-[var(--color-background)]"></div>
+                <p className="text-[var(--color-text-muted)] text-sm font-light">Point your camera at the QR code on your table.</p>
               </div>
             )}
           </div>

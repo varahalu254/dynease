@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Clock, CreditCard } from 'lucide-react';
+import { AlertTriangle, Clock, CreditCard, X, CheckCircle } from 'lucide-react';
 
 export default function RestaurantDashboard() {
   const [restaurantName, setRestaurantName] = useState('Loading...');
   const [stats, setStats] = useState({ todaysOrders: 0, revenue: 0, activeTables: 0 });
   const [subscription, setSubscription] = useState(null);
-  const [isRenewing, setIsRenewing] = useState(false);
+  
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('GROWTH');
+  const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,8 +52,8 @@ export default function RestaurantDashboard() {
     fetchData();
   }, []);
 
-  const handleRenew = async () => {
-    setIsRenewing(true);
+  const submitRenewalRequest = async () => {
+    setIsRequesting(true);
     try {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -63,33 +66,42 @@ export default function RestaurantDashboard() {
       }
       if (subdomain) headers['x-tenant-subdomain'] = subdomain;
 
-      // Renew logic (In production, open payment gateway here)
       const res = await fetch(`${import.meta.env.VITE_API_URL}/restaurant/subscription/renew`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          plan: subscription.plan === 'FREE' ? 'GROWTH' : subscription.plan,
-          amount: subscription.plan === 'FREE' ? 999 : 1999, // Mock
-        })
+        body: JSON.stringify({ plan: selectedPlan })
       });
       const data = await res.json();
       if (data.success) {
-        alert('Subscription renewed successfully!');
-        window.location.reload();
+        alert('Renewal request sent successfully! Waiting for admin approval.');
+        setShowPlanModal(false);
+        setSubscription(prev => ({ ...prev, renewalRequest: data.data.renewalRequest }));
       } else {
-        alert(data.message || 'Failed to renew');
+        alert(data.message || 'Failed to request renewal');
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to process renewal');
+      alert('Failed to process request');
     } finally {
-      setIsRenewing(false);
+      setIsRequesting(false);
     }
   };
 
   const getSubAlert = () => {
     if (!subscription) return null;
-    const { status, remainingDays, plan } = subscription;
+    const { status, remainingDays } = subscription;
+
+    if (subscription.renewalRequest && subscription.renewalRequest.status === 'PENDING') {
+      return (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg flex items-start gap-3 mb-6">
+          <Clock className="shrink-0 mt-0.5" size={20} />
+          <div>
+            <h4 className="font-bold">Renewal Request Pending</h4>
+            <p className="text-sm">Your request to renew/upgrade to the {subscription.renewalRequest.plan} plan has been sent to the admin and is pending approval.</p>
+          </div>
+        </div>
+      );
+    }
 
     if (status === 'EXPIRED') {
       return (
@@ -140,9 +152,10 @@ export default function RestaurantDashboard() {
 
   const totalDays = subscription?.status === 'TRIAL' ? 14 : 30;
   const progressPercent = subscription ? Math.min(100, Math.max(0, (subscription.remainingDays / totalDays) * 100)) : 0;
+  const isPending = subscription?.renewalRequest?.status === 'PENDING';
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto relative">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Welcome to {restaurantName}</h1>
       
       {getSubAlert()}
@@ -184,6 +197,7 @@ export default function RestaurantDashboard() {
                 <p className="text-2xl font-bold text-gray-900 mb-6">{subscription.plan}</p>
                 
                 <p className="text-sm text-gray-500 mb-1">Expiry Date</p>
+                <p className="text-sm text-gray-500 mb-1">MM/DD/YYYY</p>
                 <p className="text-lg font-medium text-gray-800 mb-6">
                   {subscription.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}
                 </p>
@@ -206,13 +220,62 @@ export default function RestaurantDashboard() {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button 
-                    onClick={handleRenew}
-                    disabled={isRenewing}
-                    className="flex-1 bg-orange-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+                    onClick={() => setShowPlanModal(true)}
+                    disabled={isPending}
+                    className="flex-1 bg-orange-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {isRenewing ? 'Processing...' : (subscription.plan === 'FREE' ? 'Upgrade to Paid Plan' : 'Renew Subscription')}
+                    {isPending ? 'Request Pending' : (subscription.plan === 'FREE' ? 'Upgrade Plan' : 'Renew Subscription')}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plan Selection Modal */}
+      {showPlanModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-800">Select Plan to Renew</h3>
+              <button onClick={() => setShowPlanModal(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-200 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div 
+                onClick={() => setSelectedPlan('GROWTH')}
+                className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedPlan === 'GROWTH' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-200'}`}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-bold text-lg text-gray-800">GROWTH Plan</span>
+                  {selectedPlan === 'GROWTH' && <CheckCircle className="text-orange-500" size={20} />}
+                </div>
+                <p className="text-orange-600 font-bold mb-2">₹999 / month</p>
+                <p className="text-sm text-gray-500">Perfect for growing restaurants.</p>
+              </div>
+
+              <div 
+                onClick={() => setSelectedPlan('PRO')}
+                className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedPlan === 'PRO' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-200'}`}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-bold text-lg text-gray-800">PRO Plan</span>
+                  {selectedPlan === 'PRO' && <CheckCircle className="text-orange-500" size={20} />}
+                </div>
+                <p className="text-orange-600 font-bold mb-2">₹1999 / month</p>
+                <p className="text-sm text-gray-500">Advanced features for power users.</p>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button onClick={() => setShowPlanModal(false)} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-colors">
+                  Cancel
+                </button>
+                <button onClick={submitRenewalRequest} disabled={isRequesting} className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold shadow-lg shadow-orange-200 transition-colors disabled:opacity-50">
+                  {isRequesting ? 'Sending...' : 'Send Request'}
+                </button>
               </div>
             </div>
           </div>

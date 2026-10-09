@@ -73,6 +73,8 @@ exports.getAllRestaurants = async (req, res, next) => {
       subdomain: r.subdomain,
       status: r.status,
       selectedPlan: r.selectedPlan,
+      subscriptionStatus: r.subscriptionStatus,
+      renewalRequest: r.renewalRequest,
       ownerId: {
         name: r.ownerName || 'Owner', 
         email: r.ownerEmail,
@@ -296,6 +298,7 @@ exports.updateRestaurant = async (req, res, next) => {
         transactionId: 'ADMIN_MANUAL_UPDATE'
       });
       updateData.renewalHistory = existingRestaurant.renewalHistory;
+      updateData.$unset = { renewalRequest: 1 };
     }
 
     if (ownerEmail) updateData.ownerEmail = ownerEmail;

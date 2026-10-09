@@ -81,7 +81,18 @@ const restaurantRegistrySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  databaseProvisionedAt: Date
+  databaseProvisionedAt: Date,
+  renewalRequest: {
+    plan: {
+      type: String,
+      enum: ['GROWTH', 'PRO']
+    },
+    status: {
+      type: String,
+      enum: ['PENDING', 'APPROVED', 'REJECTED']
+    },
+    requestedAt: Date
+  }
 }, { timestamps: true, collection: 'restaurant_details' });
 
 // Always use default mongoose connection for platform DB

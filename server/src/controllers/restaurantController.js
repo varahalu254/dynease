@@ -460,7 +460,8 @@ exports.getSubscription = async (req, res) => {
         endDate: registry.subscriptionEndDate,
         remainingDays,
         lastPaymentAt: registry.lastPaymentAt,
-        renewalHistory: registry.renewalHistory
+        renewalHistory: registry.renewalHistory,
+        renewalRequest: registry.renewalRequest
       } 
     });
   } catch (error) {
@@ -471,44 +472,33 @@ exports.getSubscription = async (req, res) => {
 
 exports.renewSubscription = async (req, res) => {
   try {
-    const { plan, transactionId, amount } = req.body;
+    const { plan } = req.body;
     
     const registry = req.tenantRegistry;
     if (!registry) return res.status(404).json({ success: false, message: 'Registry not found' });
 
+    // Validate plan
+    if (!['GROWTH', 'PRO'].includes(plan)) {
+      return res.status(400).json({ success: false, message: 'Invalid plan selected' });
+    }
+
+    if (registry.renewalRequest && registry.renewalRequest.status === 'PENDING') {
+      return res.status(400).json({ success: false, message: 'A renewal request is already pending.' });
+    }
+
     const now = new Date();
-    const currentEnd = registry.subscriptionEndDate ? new Date(registry.subscriptionEndDate) : now;
-    const startDate = currentEnd > now ? currentEnd : now;
-    
-    const newEnd = new Date(startDate);
-    newEnd.setDate(newEnd.getDate() + 30);
-
-    registry.selectedPlan = plan || registry.selectedPlan;
-    registry.subscriptionStatus = 'ACTIVE';
-    registry.subscriptionEndDate = newEnd;
-    registry.lastPaymentAt = now;
-    registry.paymentStatus = 'PAID';
-    
-    registry.renewalHistory.push({
-      plan: registry.selectedPlan,
-      amount: amount || 0,
-      date: now,
-      transactionId: transactionId || 'MANUAL_RENEWAL'
-    });
-
-    registry.remindersSent = {
-      sevenDay: false,
-      threeDay: false,
-      oneDay: false,
-      expired: false
+    registry.renewalRequest = {
+      plan,
+      status: 'PENDING',
+      requestedAt: now
     };
 
     await registry.save();
 
     res.status(200).json({ 
       success: true, 
-      message: 'Subscription renewed successfully', 
-      data: { endDate: newEnd }
+      message: 'Renewal request sent successfully. Pending admin approval.', 
+      data: { renewalRequest: registry.renewalRequest }
     });
   } catch (error) {
     console.error(error);

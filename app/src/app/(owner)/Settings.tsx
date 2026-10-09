@@ -75,6 +75,13 @@ export default function SettingsScreen() {
           )}
         </TouchableOpacity>
       </View>
+      <View style={[styles.card, { marginTop: 20 }]}>
+        <Text style={styles.sectionTitle}>Support</Text>
+        <Text style={styles.label}>Need help or have questions?</Text>
+        <Text style={[styles.input, { color: '#ea580c', fontWeight: 'bold', borderWidth: 0, padding: 0 }]}>
+          contact@dynease.in
+        </Text>
+      </View>
     </ScrollView>
   );
 }

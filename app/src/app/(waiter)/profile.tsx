@@ -117,6 +117,14 @@ export default function ProfileScreen() {
           )}
         </View>
       </View>
+      <View style={[styles.card, { padding: 24, marginTop: -15 }]}>
+        <View style={styles.tablesHeader}>
+          <Ionicons name="help-buoy" size={20} color="#f97316" />
+          <Text style={styles.tablesTitle}>Support</Text>
+        </View>
+        <Text style={{ color: '#64748b', marginBottom: 5 }}>Need help or have questions?</Text>
+        <Text style={{ color: '#f97316', fontWeight: 'bold' }}>contact@dynease.in</Text>
+      </View>
     </ScrollView>
   );
 }

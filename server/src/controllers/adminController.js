@@ -73,6 +73,8 @@ exports.getAllRestaurants = async (req, res, next) => {
       subdomain: r.subdomain,
       status: r.status,
       selectedPlan: r.selectedPlan,
+      subscriptionStatus: r.subscriptionStatus,
+      renewalRequest: r.renewalRequest,
       ownerId: {
         name: r.ownerName || 'Owner', 
         email: r.ownerEmail,
@@ -260,8 +262,45 @@ exports.updateRestaurant = async (req, res, next) => {
     const { id } = req.params;
     const { name, subscriptionPlan, isActive, ownerEmail, ownerName, ownerPhone, subdomain } = req.body;
     
+    const existingRestaurant = await RestaurantRegistry.findOne({ restaurantId: id });
+    if (!existingRestaurant) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+
     const status = isActive ? 'ACTIVE' : 'SUSPENDED';
     const updateData = { restaurantName: name, selectedPlan: subscriptionPlan, status };
+    
+    // Reset subscription dates and status if the admin changes the plan
+    if (subscriptionPlan && subscriptionPlan !== existingRestaurant.selectedPlan) {
+      const now = new Date();
+      updateData.subscriptionStartDate = now;
+      
+      const newEnd = new Date(now);
+      if (subscriptionPlan === 'FREE') {
+        newEnd.setDate(newEnd.getDate() + 14);
+        updateData.subscriptionStatus = 'TRIAL';
+      } else {
+        newEnd.setDate(newEnd.getDate() + 30);
+        updateData.subscriptionStatus = 'ACTIVE';
+      }
+      updateData.subscriptionEndDate = newEnd;
+      updateData.remindersSent = {
+        sevenDay: false,
+        threeDay: false,
+        oneDay: false,
+        expired: false
+      };
+      
+      existingRestaurant.renewalHistory.push({
+        plan: subscriptionPlan,
+        amount: 0,
+        date: now,
+        transactionId: 'ADMIN_MANUAL_UPDATE'
+      });
+      updateData.renewalHistory = existingRestaurant.renewalHistory;
+      updateData.$unset = { renewalRequest: 1 };
+    }
+
     if (ownerEmail) updateData.ownerEmail = ownerEmail;
     if (ownerName) updateData.ownerName = ownerName;
     if (ownerPhone) updateData.ownerPhone = ownerPhone;
@@ -280,9 +319,6 @@ exports.updateRestaurant = async (req, res, next) => {
       updateData,
       { new: true, runValidators: true }
     );
-    if (!restaurant) {
-      return res.status(404).json({ success: false, message: 'Restaurant not found' });
-    }
     
     // Update tenant DB
     try {
@@ -391,6 +427,53 @@ exports.createPlan = async (req, res, next) => {
     const { name, price, description, features } = req.body;
     const plan = await SubscriptionPlan.create({ name, price, description, features });
     res.status(201).json({ success: true, message: 'Plan created successfully', data: { plan } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const Ad = require('../models/platform/Ad');
+
+exports.getAds = async (req, res, next) => {
+  try {
+    const ads = await Ad.find().sort('-createdAt');
+    res.status(200).json({ success: true, data: { ads } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createAd = async (req, res, next) => {
+  try {
+    const { title, imageUrl, targetUrl, status } = req.body;
+    const ad = await Ad.create({ title, imageUrl, targetUrl, status });
+    res.status(201).json({ success: true, message: 'Ad created successfully', data: { ad } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateAd = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const ad = await Ad.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    if (!ad) {
+      return res.status(404).json({ success: false, message: 'Ad not found' });
+    }
+    res.status(200).json({ success: true, message: 'Ad updated successfully', data: { ad } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteAd = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const ad = await Ad.findByIdAndDelete(id);
+    if (!ad) {
+      return res.status(404).json({ success: false, message: 'Ad not found' });
+    }
+    res.status(200).json({ success: true, message: 'Ad deleted successfully' });
   } catch (error) {
     next(error);
   }

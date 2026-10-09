@@ -44,7 +44,19 @@ class RestaurantProvisioningService {
     } else {
       restaurantId = this.generateRestaurantId();
       databaseName = this.getDatabaseName(registration.subdomain);
+      const plan = registration.selectedPlan || 'FREE';
+      let subStatus = 'TRIAL';
+      const startDate = new Date();
+      const endDate = new Date();
       
+      if (plan === 'FREE') {
+        subStatus = 'TRIAL';
+        endDate.setDate(endDate.getDate() + 14); // 14 days trial
+      } else {
+        subStatus = 'ACTIVE';
+        endDate.setDate(endDate.getDate() + 30); // 30 days paid plan
+      }
+
       // Create Registry Record
       registry = new RestaurantRegistry({
         restaurantId,
@@ -56,9 +68,12 @@ class RestaurantProvisioningService {
         ownerName: registration.ownerName,
         ownerPhone: registration.ownerPhone,
         status: 'PROVISIONING',
-        selectedPlan: registration.selectedPlan,
-        subscriptionStatus: 'TRIAL',
-        approvedAt: new Date()
+        selectedPlan: plan,
+        subscriptionStatus: subStatus,
+        subscriptionStartDate: startDate,
+        subscriptionEndDate: endDate,
+        activatedAt: startDate,
+        approvedAt: startDate
       });
       await registry.save();
     }

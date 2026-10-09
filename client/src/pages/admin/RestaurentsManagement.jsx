@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Search, X, Send, CheckCircle, Loader, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Edit, Search, X, Send, CheckCircle, Loader, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 export default function RestaurantsManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -197,6 +197,25 @@ export default function RestaurantsManagement() {
     }
   };
 
+  const handleAutoApprove = async (id, payload) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/restaurants/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchRestaurants();
+        alert('Renewal request approved successfully!');
+      } else {
+        alert(data.message || 'Error approving request');
+      }
+    } catch (err) {
+      alert('Network error.');
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 relative">
       <div className="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -270,12 +289,56 @@ export default function RestaurantsManagement() {
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${res.selectedPlan === 'PRO' ? 'bg-purple-100 text-purple-700' : res.selectedPlan === 'GROWTH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {res.selectedPlan || 'FREE'}
-                    </span>
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${res.selectedPlan === 'PRO' ? 'bg-purple-100 text-purple-700' : res.selectedPlan === 'GROWTH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {res.selectedPlan || 'FREE'}
+                      </span>
+                      {res.subscriptionStatus && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          res.subscriptionStatus === 'EXPIRED' ? 'bg-red-100 text-red-700' :
+                          res.subscriptionStatus === 'TRIAL' ? 'bg-blue-100 text-blue-700' :
+                          res.subscriptionStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {res.subscriptionStatus}
+                        </span>
+                      )}
+                      {res.renewalRequest?.status === 'PENDING' && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                          <AlertTriangle size={10} /> Request: {res.renewalRequest.plan}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end items-center gap-2">
+                      {res.renewalRequest?.status === 'PENDING' && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Approve upgrade to ${res.renewalRequest.plan}?`)) {
+                              setEditFormData({
+                                name: res.name,
+                                subdomain: res.subdomain || res.slug || '',
+                                subscriptionPlan: res.renewalRequest.plan,
+                                isActive: res.isActive || res.status === 'ACTIVE',
+                                ownerName: res.ownerId?.name || '',
+                                ownerEmail: res.ownerId?.email || '',
+                                ownerPhone: res.ownerId?.phone || ''
+                              });
+                              setEditingId(res._id);
+                              // We can simulate an edit submit directly instead of opening modal
+                              handleAutoApprove(res._id, {
+                                name: res.name,
+                                subscriptionPlan: res.renewalRequest.plan,
+                                isActive: res.isActive || res.status === 'ACTIVE'
+                              });
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-100 text-orange-700 hover:bg-orange-200 transition-all shadow-sm"
+                          title={`Approve ${res.renewalRequest.plan} renewal request`}
+                        >
+                          Approve
+                        </button>
+                      )}
                       <button
                         onClick={() => handleSendCredentials(res._id)}
                         disabled={credStatus === 'sending'}

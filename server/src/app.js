@@ -16,7 +16,10 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 const allowedOrigins = ['http://localhost:5173', 'http://admin.localhost:5173', 'https://dynease.in'];
 app.use(cors({
   origin: function (origin, callback) {

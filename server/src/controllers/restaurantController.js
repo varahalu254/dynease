@@ -433,3 +433,75 @@ exports.getStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+// ──────────────────────────────────────────
+//  SUBSCRIPTION
+// ──────────────────────────────────────────
+
+const RestaurantRegistry = require('../models/platform/RestaurantRegistry');
+
+exports.getSubscription = async (req, res) => {
+  try {
+    const registry = req.tenantRegistry;
+    if (!registry) return res.status(404).json({ success: false, message: 'Registry not found' });
+    
+    let remainingDays = 0;
+    if (registry.subscriptionEndDate) {
+      const diff = new Date(registry.subscriptionEndDate) - new Date();
+      remainingDays = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: {
+        plan: registry.selectedPlan,
+        status: registry.subscriptionStatus,
+        startDate: registry.subscriptionStartDate,
+        endDate: registry.subscriptionEndDate,
+        remainingDays,
+        lastPaymentAt: registry.lastPaymentAt,
+        renewalHistory: registry.renewalHistory,
+        renewalRequest: registry.renewalRequest
+      } 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.renewSubscription = async (req, res) => {
+  try {
+    const { plan } = req.body;
+    
+    const registry = req.tenantRegistry;
+    if (!registry) return res.status(404).json({ success: false, message: 'Registry not found' });
+
+    // Validate plan
+    if (!['GROWTH', 'PRO'].includes(plan)) {
+      return res.status(400).json({ success: false, message: 'Invalid plan selected' });
+    }
+
+    if (registry.renewalRequest && registry.renewalRequest.status === 'PENDING') {
+      return res.status(400).json({ success: false, message: 'A renewal request is already pending.' });
+    }
+
+    const now = new Date();
+    registry.renewalRequest = {
+      plan,
+      status: 'PENDING',
+      requestedAt: now
+    };
+
+    await registry.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Renewal request sent successfully. Pending admin approval.', 
+      data: { renewalRequest: registry.renewalRequest }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

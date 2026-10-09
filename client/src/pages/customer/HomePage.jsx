@@ -18,6 +18,7 @@ export default function HomePage({ forcedSlug }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const categoryRefs = useRef({});
 
   useEffect(() => {
@@ -28,10 +29,8 @@ export default function HomePage({ forcedSlug }) {
         const headers = getTenantHeaders();
 
         if (activeSlug) {
-          // Legacy /r/:slug route (dev fallback)
           url = `${import.meta.env.VITE_API_URL}/public/restaurant/${activeSlug}/menu`;
         } else {
-          // Subdomain-based (production)
           url = `${import.meta.env.VITE_API_URL}/public/menu`;
         }
 
@@ -41,12 +40,10 @@ export default function HomePage({ forcedSlug }) {
         if (json.success) {
           const data = json.data;
           setRestaurant(data.restaurant || session?.restaurant);
-          // Handle both response shapes (new grouped vs legacy flat)
           if (data.categories && Array.isArray(data.categories) && data.categories[0]?.items) {
             setCategories(data.categories);
             setActiveCategory(data.categories[0]?.name || null);
           } else if (data.menuItems) {
-            // Legacy flat format
             const grouped = {};
             for (const item of data.menuItems) {
               if (!grouped[item.category]) grouped[item.category] = [];
@@ -66,6 +63,7 @@ export default function HomePage({ forcedSlug }) {
           }
         } else {
           setError(json.message || 'Failed to load menu.');
+          setErrorCode(json.code || '');
         }
       } catch {
         setError('Network error. Please try again.');
@@ -112,12 +110,17 @@ export default function HomePage({ forcedSlug }) {
   }
 
   if (error) {
+    const isSubscriptionError = errorCode.startsWith('SUBSCRIPTION_');
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
         <div className="bg-white rounded-2xl shadow p-8 max-w-sm w-full">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Oops!</h2>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <button onClick={() => window.location.reload()} className="bg-orange-600 text-white px-6 py-2 rounded-xl font-bold">Retry</button>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {isSubscriptionError ? 'Restaurant Unavailable' : 'Oops!'}
+          </h2>
+          <p className="text-gray-500 mb-6">{error}</p>
+          {!isSubscriptionError && (
+            <button onClick={() => window.location.reload()} className="bg-orange-600 text-white px-6 py-2 rounded-xl font-bold">Retry</button>
+          )}
         </div>
       </div>
     );

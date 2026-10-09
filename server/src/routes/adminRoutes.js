@@ -31,4 +31,10 @@ router.post('/plans', adminController.createPlan);
 // Send login credentials to restaurant owner via WhatsApp
 router.post('/restaurants/:id/send-credentials', adminController.sendCredentials);
 
+// Ads Management
+router.get('/ads', adminController.getAds);
+router.post('/ads', adminController.createAd);
+router.put('/ads/:id', adminController.updateAd);
+router.delete('/ads/:id', adminController.deleteAd);
+
 module.exports = router;

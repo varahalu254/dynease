@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "in.dynease.app",
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

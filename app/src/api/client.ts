@@ -5,7 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 
 // When using Android emulator, localhost is 10.0.2.2. For iOS/Web it's usually localhost.
 // Replace this with your actual local IP address if running on a physical device over Wi-Fi.
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.92.206.96:5000/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.dynease.in/api';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

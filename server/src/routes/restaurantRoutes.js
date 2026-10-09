@@ -33,4 +33,8 @@ router.get('/stats', restrictTo('RESTAURANT_OWNER'), restaurantController.getSta
 router.get('/profile', restrictTo('RESTAURANT_OWNER'), restaurantController.getProfile);
 router.put('/profile', restrictTo('RESTAURANT_OWNER'), restaurantController.updateProfile);
 
+// ── Subscription routes ──
+router.get('/subscription', restrictTo('RESTAURANT_OWNER'), restaurantController.getSubscription);
+router.post('/subscription/renew', restrictTo('RESTAURANT_OWNER'), restaurantController.renewSubscription);
+
 module.exports = router;

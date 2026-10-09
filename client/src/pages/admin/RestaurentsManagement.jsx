@@ -270,9 +270,20 @@ export default function RestaurantsManagement() {
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${res.selectedPlan === 'PRO' ? 'bg-purple-100 text-purple-700' : res.selectedPlan === 'GROWTH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {res.selectedPlan || 'FREE'}
-                    </span>
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${res.selectedPlan === 'PRO' ? 'bg-purple-100 text-purple-700' : res.selectedPlan === 'GROWTH' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {res.selectedPlan || 'FREE'}
+                      </span>
+                      {res.subscriptionStatus && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          res.subscriptionStatus === 'EXPIRED' ? 'bg-red-100 text-red-700' :
+                          res.subscriptionStatus === 'TRIAL' ? 'bg-blue-100 text-blue-700' :
+                          res.subscriptionStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {res.subscriptionStatus}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end items-center gap-2">

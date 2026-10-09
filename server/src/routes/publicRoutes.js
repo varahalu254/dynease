@@ -1,6 +1,7 @@
 const express = require('express');
 const publicController = require('../controllers/publicController');
 const rateLimit = require('express-rate-limit');
+const { checkSubscription } = require('../middlewares/subscriptionMiddleware');
 
 const router = express.Router();
 
@@ -11,18 +12,20 @@ const orderLimiter = rateLimit({
   message: { success: false, message: 'Too many orders placed. Please wait a moment.' }
 });
 
-// QR resolution
+// QR resolution (QR code itself should resolve, but ordering/menu access might be blocked)
 router.get('/qr/:qrToken', publicController.getTableByQR);
 router.get('/table/:tableNumber', publicController.getTableByNumber);
 
-// Menu (subdomain-based)
-router.get('/menu', publicController.getMenu);
+// Menu (subdomain-based) - check subscription
+router.get('/menu', checkSubscription, publicController.getMenu);
 
-// Legacy: menu by slug (used by SubdomainWrapper validation)
-router.get('/restaurant/:slug/menu', publicController.getRestaurantMenu);
+// Legacy: menu by slug - check subscription
+router.get('/restaurant/:slug/menu', checkSubscription, publicController.getRestaurantMenu);
 
-// Orders
-router.post('/orders', orderLimiter, publicController.createOrder);
+// Orders - check subscription
+router.post('/orders', orderLimiter, checkSubscription, publicController.createOrder);
+
+// Allow fetching an existing order even if expired, since customers may need to see their bill
 router.get('/orders/:orderId', publicController.getOrder);
 
 module.exports = router;

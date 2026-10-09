@@ -55,8 +55,25 @@ const restaurantRegistrySchema = new mongoose.Schema({
   },
   subscriptionStatus: {
     type: String,
-    enum: ['TRIAL', 'ACTIVE', 'EXPIRED', 'CANCELLED'],
-    default: 'TRIAL'
+    enum: ['PENDING', 'TRIAL', 'ACTIVE', 'EXPIRED', 'SUSPENDED', 'CANCELLED'],
+    default: 'PENDING'
+  },
+  subscriptionStartDate: Date,
+  subscriptionEndDate: Date,
+  activatedAt: Date,
+  lastPaymentAt: Date,
+  paymentStatus: String,
+  renewalHistory: [{
+    plan: String,
+    amount: Number,
+    date: Date,
+    transactionId: String
+  }],
+  remindersSent: {
+    sevenDay: { type: Boolean, default: false },
+    threeDay: { type: Boolean, default: false },
+    oneDay: { type: Boolean, default: false },
+    expired: { type: Boolean, default: false }
   },
   approvedAt: Date,
   suspendedAt: Date,

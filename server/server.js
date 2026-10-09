@@ -28,10 +28,16 @@ const io = new Server(server, {
 require('./src/sockets')(io);
 app.set('io', io);
 
+const { initSubscriptionJobs } = require('./src/jobs/subscriptionJobs');
+
 // Database connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/dynease')
   .then(() => {
     console.log('Connected to MongoDB');
+    
+    // Initialize CRON jobs
+    initSubscriptionJobs();
+
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

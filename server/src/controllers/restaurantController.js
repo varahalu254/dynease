@@ -433,3 +433,87 @@ exports.getStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+// ──────────────────────────────────────────
+//  SUBSCRIPTION
+// ──────────────────────────────────────────
+
+const RestaurantRegistry = require('../models/platform/RestaurantRegistry');
+
+exports.getSubscription = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const registry = await RestaurantRegistry.findOne({ restaurantId });
+    if (!registry) return res.status(404).json({ success: false, message: 'Registry not found' });
+    
+    let remainingDays = 0;
+    if (registry.subscriptionEndDate) {
+      const diff = new Date(registry.subscriptionEndDate) - new Date();
+      remainingDays = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: {
+        plan: registry.selectedPlan,
+        status: registry.subscriptionStatus,
+        startDate: registry.subscriptionStartDate,
+        endDate: registry.subscriptionEndDate,
+        remainingDays,
+        lastPaymentAt: registry.lastPaymentAt,
+        renewalHistory: registry.renewalHistory
+      } 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.renewSubscription = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { plan, transactionId, amount } = req.body;
+    
+    const registry = await RestaurantRegistry.findOne({ restaurantId });
+    if (!registry) return res.status(404).json({ success: false, message: 'Registry not found' });
+
+    const now = new Date();
+    const currentEnd = registry.subscriptionEndDate ? new Date(registry.subscriptionEndDate) : now;
+    const startDate = currentEnd > now ? currentEnd : now;
+    
+    const newEnd = new Date(startDate);
+    newEnd.setDate(newEnd.getDate() + 30);
+
+    registry.selectedPlan = plan || registry.selectedPlan;
+    registry.subscriptionStatus = 'ACTIVE';
+    registry.subscriptionEndDate = newEnd;
+    registry.lastPaymentAt = now;
+    registry.paymentStatus = 'PAID';
+    
+    registry.renewalHistory.push({
+      plan: registry.selectedPlan,
+      amount: amount || 0,
+      date: now,
+      transactionId: transactionId || 'MANUAL_RENEWAL'
+    });
+
+    registry.remindersSent = {
+      sevenDay: false,
+      threeDay: false,
+      oneDay: false,
+      expired: false
+    };
+
+    await registry.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Subscription renewed successfully', 
+      data: { endDate: newEnd }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

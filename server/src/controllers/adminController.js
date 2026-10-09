@@ -260,8 +260,44 @@ exports.updateRestaurant = async (req, res, next) => {
     const { id } = req.params;
     const { name, subscriptionPlan, isActive, ownerEmail, ownerName, ownerPhone, subdomain } = req.body;
     
+    const existingRestaurant = await RestaurantRegistry.findOne({ restaurantId: id });
+    if (!existingRestaurant) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found' });
+    }
+
     const status = isActive ? 'ACTIVE' : 'SUSPENDED';
     const updateData = { restaurantName: name, selectedPlan: subscriptionPlan, status };
+    
+    // Reset subscription dates and status if the admin changes the plan
+    if (subscriptionPlan && subscriptionPlan !== existingRestaurant.selectedPlan) {
+      const now = new Date();
+      updateData.subscriptionStartDate = now;
+      
+      const newEnd = new Date(now);
+      if (subscriptionPlan === 'FREE') {
+        newEnd.setDate(newEnd.getDate() + 14);
+        updateData.subscriptionStatus = 'TRIAL';
+      } else {
+        newEnd.setDate(newEnd.getDate() + 30);
+        updateData.subscriptionStatus = 'ACTIVE';
+      }
+      updateData.subscriptionEndDate = newEnd;
+      updateData.remindersSent = {
+        sevenDay: false,
+        threeDay: false,
+        oneDay: false,
+        expired: false
+      };
+      
+      existingRestaurant.renewalHistory.push({
+        plan: subscriptionPlan,
+        amount: 0,
+        date: now,
+        transactionId: 'ADMIN_MANUAL_UPDATE'
+      });
+      updateData.renewalHistory = existingRestaurant.renewalHistory;
+    }
+
     if (ownerEmail) updateData.ownerEmail = ownerEmail;
     if (ownerName) updateData.ownerName = ownerName;
     if (ownerPhone) updateData.ownerPhone = ownerPhone;
@@ -280,9 +316,6 @@ exports.updateRestaurant = async (req, res, next) => {
       updateData,
       { new: true, runValidators: true }
     );
-    if (!restaurant) {
-      return res.status(404).json({ success: false, message: 'Restaurant not found' });
-    }
     
     // Update tenant DB
     try {

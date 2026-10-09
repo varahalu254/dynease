@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Store, Users, DollarSign, Settings, LogOut, Megaphone, MessageSquare, Menu, X } from 'lucide-react';
 
 export default function AdminLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -35,16 +35,17 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 bg-slate-900 text-white flex flex-col transform transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 ${
-          isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 lg:w-64'
+        className={`fixed inset-y-0 left-0 z-50 bg-slate-900 text-white flex flex-col transition-all duration-300 ease-in-out lg:static lg:h-screen overflow-hidden ${
+          isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0 lg:translate-x-0'
         }`}
       >
-        <div className="p-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-orange-500 whitespace-nowrap">Dynease Admin</h2>
-          <button className="lg:hidden text-slate-300 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
-            <X size={24} />
-          </button>
-        </div>
+        <div className="w-64 flex flex-col h-full">
+          <div className="p-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-orange-500 whitespace-nowrap">Dynease Admin</h2>
+            <button className="lg:hidden text-slate-300 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+              <X size={24} />
+            </button>
+          </div>
         
         <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto overflow-x-hidden">
           {links.map((link) => {
@@ -72,6 +73,7 @@ export default function AdminLayout() {
             <span className="whitespace-nowrap">Logout</span>
           </button>
         </div>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -80,7 +82,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Menu size={24} />
             </button>

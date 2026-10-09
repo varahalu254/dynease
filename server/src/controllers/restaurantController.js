@@ -442,8 +442,7 @@ const RestaurantRegistry = require('../models/platform/RestaurantRegistry');
 
 exports.getSubscription = async (req, res) => {
   try {
-    const restaurantId = req.user.restaurantId;
-    const registry = await RestaurantRegistry.findOne({ restaurantId });
+    const registry = req.tenantRegistry;
     if (!registry) return res.status(404).json({ success: false, message: 'Registry not found' });
     
     let remainingDays = 0;
@@ -472,10 +471,9 @@ exports.getSubscription = async (req, res) => {
 
 exports.renewSubscription = async (req, res) => {
   try {
-    const restaurantId = req.user.restaurantId;
     const { plan, transactionId, amount } = req.body;
     
-    const registry = await RestaurantRegistry.findOne({ restaurantId });
+    const registry = req.tenantRegistry;
     if (!registry) return res.status(404).json({ success: false, message: 'Registry not found' });
 
     const now = new Date();
